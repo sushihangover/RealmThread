@@ -8,7 +8,7 @@ namespace RealmThread.NugetTest
 		{
 			InitializeComponent();
 
-			MainPage = new RealmThread.NugetTestPage();
+			MainPage = new NugetTestPage();
 		}
 
 		protected override void OnStart()

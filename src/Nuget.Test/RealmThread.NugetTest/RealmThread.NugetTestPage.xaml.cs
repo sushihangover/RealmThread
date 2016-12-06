@@ -2,11 +2,11 @@
 
 namespace RealmThread.NugetTest
 {
-	public partial class RealmThread.NugetTestPage : ContentPage
+	public partial class NugetTestPage : ContentPage
 	{
-		public RealmThread.NugetTestPage ()
+		public NugetTestPage ()
 		{
 			InitializeComponent();
-}
+		}
 	}
 }
