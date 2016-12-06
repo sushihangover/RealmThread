@@ -7,7 +7,7 @@
         <dependency id="Realm" version="0.80.0" />
       </group>
     </dependencies>
-    <id>sushihangover.realmthread</id>
+    <id>SushiHangover.RealmThread</id>
     <title>SushiHangover.RealmThread</title>
     <description>An Action/Task Message Pump for running commands on a dedicated Realm thread.</description>
     <summary>An Action/Task Message Pump for running commands on a dedicated Realm thread</summary>
