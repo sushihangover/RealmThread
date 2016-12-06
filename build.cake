@@ -55,7 +55,7 @@ var buildVersion = gitVersion.FullBuildMetaData;
 
 // Artifacts
 var artifactDirectory = "./artifacts/";
-var packageWhitelist = new[] { "RealmThread" };
+var packageWhitelist = new[] { "SushiHangover.RealmThread" };
 
 // Macros
 Action Abort = () => { throw new Exception("a non-recoverable fatal error occurred."); };
@@ -202,10 +202,10 @@ Task("Package")
 
 Task("PublishPackages")
     //.IsDependentOn("RunUnitTests")
-    //.IsDependentOn("Package")
-    .WithCriteria(() => !local)
-    .WithCriteria(() => !isPullRequest)
-    .WithCriteria(() => isRepository)
+    .IsDependentOn("Package")
+    //.WithCriteria(() => !local)
+    //.WithCriteria(() => !isPullRequest)
+    //.WithCriteria(() => isRepository)
     .Does (() =>
 {
     if (isReleaseBranch && !isTagged)
@@ -242,13 +242,13 @@ Task("PublishPackages")
 });
 
 Task("CreateRelease")
-    .IsDependentOn("RunUnitTests")
-    .IsDependentOn("Package")
-    .WithCriteria(() => !local)
-    .WithCriteria(() => !isPullRequest)
-    .WithCriteria(() => isRepository)
-    .WithCriteria(() => isReleaseBranch)
-    .WithCriteria(() => !isTagged)
+    //.IsDependentOn("RunUnitTests")
+    //.IsDependentOn("Package")
+    //.WithCriteria(() => !local)
+    //.WithCriteria(() => !isPullRequest)
+    //.WithCriteria(() => isRepository)
+    //.WithCriteria(() => isReleaseBranch)
+    //.WithCriteria(() => !isTagged)
     .Does (() =>
 {
     var username = EnvironmentVariable("GITHUB_USERNAME");

@@ -112,7 +112,7 @@
       <HintPath>..\..\packages\Realm.0.80.0\lib\Xamarin.iOS10\Realm.dll</HintPath>
     </Reference>
     <Reference Include="SushiHangover.RealmThread">
-      <HintPath>..\..\packages\sushihangover.realmthread.0.1.1\lib\Xamarin.iOS10\SushiHangover.RealmThread.dll</HintPath>
+      <HintPath>..\..\packages\SushiHangover.RealmThread.0.1.2\lib\Xamarin.iOS10\SushiHangover.RealmThread.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
