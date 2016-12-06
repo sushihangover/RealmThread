@@ -76,7 +76,7 @@ Action<string, string> Package = (nuspec, basePath) =>
         Owners                   = new [] { "sushihangover" },
 
         ProjectUrl               = new Uri(githubUrl),
-        IconUrl                  = new Uri("https://avatars0.githubusercontent.com/u/5924219?v=3&s=200"),
+        IconUrl                  = new Uri("https://raw.githubusercontent.com/sushihangover/RealmThread/master/media/icon.png"),
         LicenseUrl               = new Uri("https://opensource.org/licenses/MIT"),
         Copyright                = "Copyright (c) SushiHangover/RobertN",
         RequireLicenseAcceptance = false,
@@ -193,8 +193,8 @@ Task("RunUnitTests")
 });
 
 Task("Package")
-    //.IsDependentOn("Build")
-    //.IsDependentOn("RunUnitTests")
+    .IsDependentOn("Build")
+    .IsDependentOn("RunUnitTests")
     .Does (() =>
 {
     Package("./SushiHangover.RealmThread.nuspec", "./");

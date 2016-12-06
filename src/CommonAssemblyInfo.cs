@@ -8,6 +8,6 @@ using System.Reflection;
 [assembly: AssemblyProduct("SushiHangover.RealmThread")]
 [assembly: AssemblyVersion("0.1.1")]
 [assembly: AssemblyFileVersion("0.1.1")]
-[assembly: AssemblyInformationalVersion("0.1.1+1.Branch.master.Sha.8e55aecaa2d52a0ef185678aa53f1c6a906e081b")]
+[assembly: AssemblyInformationalVersion("0.1.1+2.Branch.master.Sha.1ac551ce94c40e78e115d7e605d0d0ee40552eb5")]
 [assembly: AssemblyCopyright("Copyright (c) SushiHangover/RobertN")]
 
