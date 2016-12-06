@@ -42,7 +42,7 @@ var isReleaseBranch = StringComparer.OrdinalIgnoreCase.Equals("master", AppVeyor
 var isTagged = AppVeyor.Environment.Repository.Tag.IsTag;
 
 var githubOwner = "sushihangover";
-var githubRepository = "SushiHangover.RealmThread";
+var githubRepository = "RealmThread";
 var githubUrl = string.Format("https://github.com/{0}/{1}", githubOwner, githubRepository);
 
 // Version
@@ -55,7 +55,7 @@ var buildVersion = gitVersion.FullBuildMetaData;
 
 // Artifacts
 var artifactDirectory = "./artifacts/";
-var packageWhitelist = new[] { "Akavache", "Akavache.Core", "Akavache.Deprecated", "Akavache.Mobile", "Akavache.Sqlite3" };
+var packageWhitelist = new[] { "RealmThread" };
 
 // Macros
 Action Abort = () => { throw new Exception("a non-recoverable fatal error occurred."); };
@@ -135,7 +135,7 @@ Task("Build")
             {
 		        XBuild(solution, new XBuildSettings()
 		            .SetConfiguration("Debug")
-		            //.SetVerbosity(Verbosity.Minimal)
+		            .SetVerbosity(Verbosity.Minimal)
 		            );
 			}
 			if (isRunningOnWindows)
@@ -185,10 +185,10 @@ Task("RunUnitTests")
     .IsDependentOn("Build")
     .Does(() =>
 {
-    //XUnit2("./src/Akavache.Tests/bin/x64/Release/Akavache.Tests.dll", new XUnit2Settings {
+    //XUnit2("./src/RealmThread.Tests/bin/x64/Release/RealmThread.Tests.dll", new XUnit2Settings {
     //    OutputDirectory = artifactDirectory,
     //    XmlReportV1 = false,
-    //    NoAppDomain = false // Akavache.Tests requires AppDomain otherwise it does not resolve System.Reactive.*
+    //    NoAppDomain = false // RealmThread.Tests requires AppDomain otherwise it does not resolve System.Reactive.*
     //});
 });
 
@@ -201,8 +201,8 @@ Task("Package")
 });
 
 Task("PublishPackages")
-    .IsDependentOn("RunUnitTests")
-    .IsDependentOn("Package")
+    //.IsDependentOn("RunUnitTests")
+    //.IsDependentOn("Package")
     .WithCriteria(() => !local)
     .WithCriteria(() => !isPullRequest)
     .WithCriteria(() => isRepository)
@@ -310,7 +310,7 @@ Task("PublishRelease")
 //////////////////////////////////////////////////////////////////////
 
 Task("Default")
-    .IsDependentOn("CreateRelease")
+    //.IsDependentOn("CreateRelease")
     .IsDependentOn("PublishPackages")
     .IsDependentOn("PublishRelease")
     .Does (() =>
