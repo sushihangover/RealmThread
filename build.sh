@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-NUGET_SOURCE="https://www.nuget.org/api/v2/package"
-
 ##########################################################################
 # This is the Cake bootstrapper script for Linux and OS X.
 # This file was downloaded from https://github.com/cake-build/resources

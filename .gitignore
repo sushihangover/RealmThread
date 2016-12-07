@@ -1,6 +1,8 @@
 # Autosave files
 *~
 
+src/CommonAssemblyInfo.cs
+
 # build
 [Oo]bj/
 [Bb]in/
