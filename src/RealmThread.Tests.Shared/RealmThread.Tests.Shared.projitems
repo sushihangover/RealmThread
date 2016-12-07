@@ -12,16 +12,20 @@
     <Compile Include="$(MSBuildThisFileDirectory)IntegrationTestHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)RepeatAttribute.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utility.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)RealmThreadRead.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GCFixture.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)KeyValueRecord.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PerfHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PerformanceData.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)RealmThreadWrite.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)RealmRead.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)RealmWrite.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Performance\RealmThreadRead.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Performance\RealmThreadWrite.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Performance\PerfHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Basic.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Stresser.cs" />
+    <None Include="$(MSBuildThisFileDirectory)Performance\RealmRead.cs" />
+    <None Include="$(MSBuildThisFileDirectory)Performance\RealmWrite.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Performance\" />
   </ItemGroup>
 </Project>
