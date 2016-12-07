@@ -21,12 +21,12 @@ namespace SushiHangover
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
 		/// <param name="realm">Realm.</param>
-		public RealmThread(Realms.Realm realm)
+		public RealmThread(Realms.RealmConfiguration realmConfig)
 		{
 			////D.WriteLine("RealmThread Constructor");
 			workQueue = new BlockingCollection<RealmWork>();
 			realmThread = new InternalThread(workQueue);
-			realmThread.Start(realm);
+			realmThread.Start(realmConfig);
 		}
 
 		/// <summary>
@@ -136,10 +136,10 @@ namespace SushiHangover
 			_thread?.Join();
 		}
 
-		public void Run(object parentRealm)
+		public void Run(object parentRealmConfig)
 		{
 			_Id = Thread.CurrentThread.ManagedThreadId;
-			using (var localRealm = Realms.Realm.GetInstance((parentRealm as Realms.Realm).Config))
+			using (var localRealm = Realms.Realm.GetInstance(parentRealmConfig as Realms.RealmConfiguration))
 			{
 
 				//D.WriteLine($"RealmThread Starting Thread: {_Id}");

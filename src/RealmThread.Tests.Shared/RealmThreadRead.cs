@@ -39,7 +39,7 @@ namespace SushiHangover.Tests
 				{
 					st.Start();
 
-					var realmThread = new RealmThread(cache);
+					var realmThread = new RealmThread(cache.Config);
 					realmThread.BeginInvoke(threadSafeRealm =>
 					{
 						foreach (var v in toFetch)
@@ -72,7 +72,7 @@ namespace SushiHangover.Tests
 				{
 					st.Start();
 
-					using (var realmThread = new RealmThread(cache))
+					using (var realmThread = new RealmThread(cache.Config))
 					{
 						Parallel.ForEach(
 							toFetch,
@@ -111,7 +111,7 @@ namespace SushiHangover.Tests
 					var partitoner = Partitioner.Create(toFetch, EnumerablePartitionerOptions.NoBuffering);
 					Parallel.ForEach(
 						partitoner,
-						() => new RealmThread(cache),
+						() => new RealmThread(cache.Config),
 						(key, loopState, realmThread) =>
 						{
 							realmThread.BeginInvoke(threadSafeRealm =>
@@ -174,7 +174,7 @@ namespace SushiHangover.Tests
 			{
 				List<string> keys = null;
 
-				using (var realmThread = new RealmThread(cache))
+				using (var realmThread = new RealmThread(cache.Config))
 				{
 					realmThread.BeginInvoke(r =>
 					{

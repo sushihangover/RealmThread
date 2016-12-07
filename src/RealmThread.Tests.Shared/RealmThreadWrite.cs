@@ -39,8 +39,8 @@ namespace SushiHangover.Tests
 				await Task.Run(() =>
 				{
 					using (var blockingQueue = new BlockingCollection<string>())
-					using (var realmThreadWrite = new RealmThread(cache))
-					using (var realmThreadRead = new RealmThread(cache))
+					using (var realmThreadWrite = new RealmThread(cache.Config))
+					using (var realmThreadRead = new RealmThread(cache.Config))
 					{
 						Parallel.Invoke(() =>
 						{
@@ -98,7 +98,7 @@ namespace SushiHangover.Tests
 
 				await Task.Run(() =>
 				{
-					using (var realmThread = new RealmThread(cache))
+					using (var realmThread = new RealmThread(cache.Config))
 					{
 						realmThread.BeginInvoke((threadSafeRealm) =>
 						{
@@ -132,7 +132,7 @@ namespace SushiHangover.Tests
 				var st = new Stopwatch();
 				st.Start();
 
-				using (var realmThread = new RealmThread(cache))
+				using (var realmThread = new RealmThread(cache.Config))
 				{
 					await realmThread.InvokeAsync(async (threadSafeRealm) =>
 					{
