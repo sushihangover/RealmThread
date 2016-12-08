@@ -22,7 +22,6 @@ Install-Package SushiHangover.RealmThread
         
 **Nuget.org:** [https://www.nuget.org/packages/sushihangover.realmthread/](https://www.nuget.org/packages/sushihangover.realmthread/)
 
-
 ##Issues?
 
 Post an [Issue](https://github.com/sushihangover/RealmThread/issues) on Github
@@ -30,16 +29,23 @@ Post an [Issue](https://github.com/sushihangover/RealmThread/issues) on Github
 ##Usage:
 
 <div class="code">
-**..todo..**
+TODO
 </div>
+
+##Build Documention:
+
+API Reference documention is built via the great <a href="http://www.doxygen.org/index.html">
+<img src="http://www.stack.nl/~dimitri/doxygen/doxygen.png" alt="doxygen"/>
+</a>
+
+<div class="code">
+./doxygen Doxygen/realmthread.config
+</div>
+
 
 ##Build from Source:
 
 Using [cake](http://cakebuild.net) from the cmd-line:
-
-<div class="code">
-./build.sh -t Build
-</div>
 
 
 <center><sub>Thread Icon within the RealmThread Logo:</sub><br/>
@@ -47,7 +53,8 @@ Using [cake](http://cakebuild.net) from the cmd-line:
 Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a>
 </sub></center>
 
-<head><style>
+<head>
+<style>
 .nuget-badge code {
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
@@ -62,11 +69,9 @@ Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from 
     overflow: auto;
     padding: 15px
 }
-
 .nuget-badge code::before {
     content: "PM> "
 }
-
 .code {
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
@@ -81,4 +86,6 @@ Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from 
     overflow: auto;
     padding: 15px
 }
-</style></head>
+
+</style>
+</head>
