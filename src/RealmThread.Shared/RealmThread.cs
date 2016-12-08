@@ -124,7 +124,7 @@ namespace SushiHangover
 		/// </summary>
 		public void CommitTransaction()
 		{
-			if (!InTransaction) throw new RealmThreaNoTransaction("No active transaction on this thread");
+			if (!InTransaction) throw new RealmThreadNotInTransaction("No active transaction on this thread");
 
 			Action<Realms.Realm> action = r =>
 			{
@@ -151,7 +151,7 @@ namespace SushiHangover
 		/// </summary>
 		public void RollbackTransaction()
 		{
-			if (!InTransaction) throw new RealmThreaNoTransaction("No active transaction on this thread");
+			if (!InTransaction) throw new RealmThreadNotInTransaction("No active transaction on this thread");
 
 			Action<Realms.Realm> action = (r) =>
 			{
