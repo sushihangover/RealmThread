@@ -5,6 +5,10 @@
 
 An Action/Task Message Pump for running commands on a dedicated Realm thread.
 
+## GitHub Repo
+
+[https://github.com/sushihangover/RealmThread](https://github.com/sushihangover/RealmThread)
+
 ##API Documention
 
 [https://sushihangover.github.io/RealmThread/
