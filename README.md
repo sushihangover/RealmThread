@@ -32,6 +32,16 @@ Post an [Issue](https://github.com/sushihangover/RealmThread/issues) on Github
 TODO
 </div>
 
+##Build from Source:
+
+From the cmd line using the amazing [cake](http://cakebuild.net):
+<a href="http://cakebuild.net">
+<img src="http://cakebuild.net/Content/img/logo.png" alt="cake"/>
+</a>
+<div class="code">
+./build.sh -t Build
+</div>
+
 ##Build Documention:
 
 API Reference documention is built via the great <a href="http://www.doxygen.org/index.html">
@@ -43,15 +53,22 @@ API Reference documention is built via the great <a href="http://www.doxygen.org
 </div>
 
 
-##Build from Source:
+##Build Nuget Package:
 
-From the cmd line using the amazing 
-<a href="http://cakebuild.net">
-<img src="http://cakebuild.net/Content/img/logo.png" alt="cake"/>
-</a>
 <div class="code">
-./build.sh -t Build
+./build.sh -t Package
 </div>
+
+##Publish Nuget:
+
+<pre>
+<div class="code">export NUGET_APIKEY={APIKEY}
+export GITHUB_TOKEN={TOKEN/PASSWORD}
+export GITHUB_USERNAME={EMAILADDRESS}
+export NUGET_SOURCE=https://www.nuget.org/api/v2/package
+./build.sh -t PublishPackages
+</div>
+</pre>
 
 <center><sub>Thread Icon within the RealmThread Logo:</sub><br/>
 <sub>
