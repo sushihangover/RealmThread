@@ -45,8 +45,13 @@ API Reference documention is built via the great <a href="http://www.doxygen.org
 
 ##Build from Source:
 
-Using [cake](http://cakebuild.net) from the cmd-line:
-
+From the cmd line using the amazing 
+<a href="http://cakebuild.net">
+<img src="http://cakebuild.net/Content/img/logo.png" alt="cake"/>
+</a>
+<div class="code">
+./build.sh -t Build
+</div>
 
 <center><sub>Thread Icon within the RealmThread Logo:</sub><br/>
 <sub>
