@@ -67,8 +67,10 @@ $(function() {
 <div class="textblock"><div class="image">
 <img src="https://raw.githubusercontent.com/sushihangover/RealmThread/master/media/SushiHangover.RealmThread.png" style="float: right;"/>
 </div>
-<p><a class="el" href="class_sushi_hangover_1_1_realm_thread.html" title="A Realm Action Pump ">SushiHangover.RealmThread</a></p>
-<p>An Action/Task Message Pump for running commands on a dedicated Realm thread.</p>
+<h2><a class="el" href="class_sushi_hangover_1_1_realm_thread.html" title="A Realm Action Pump ">SushiHangover.RealmThread</a></h2>
+<p><b>An Action/Task Message Pump for running commands on a dedicated Realm thread.</b></p>
+<h2>GitHub Repo</h2>
+<p><a href="https://github.com/sushihangover/RealmThread">https://github.com/sushihangover/RealmThread</a></p>
 <h2>API Documention</h2>
 <p><a href="https://sushihangover.github.io/RealmThread/">https://sushihangover.github.io/RealmThread/</a></p>
 <h2>Nuget:</h2>
@@ -76,11 +78,104 @@ $(function() {
 <h2>Issues?</h2>
 <p>Post an <a href="https://github.com/sushihangover/RealmThread/issues">Issue</a> on Github</p>
 <h2>Usage:</h2>
-<div class="code"> TODO </div><h2>Build Documention:</h2>
+<h2>RealmThread:</h2>
+<p>Instance a new <code>RealmThread</code> by passing a <code>RealmConfiguration</code>, either from an existing <code>Realm</code> instance (<code>Realm.Config</code>) or constructing one yourself. </p><pre class="fragment">var realmConfig = new RealmConfiguration("myRealm.db");
+var realmThread = new RealmThread(realmConfig);
+</pre><h2>IDisposable:</h2>
+<p><code>RealmThread</code> implements <code>IDisposable</code> and to ensure data integrity call <code>Dispose</code> to ensure that all queued work on the dedicated Realm thread is completed. </p><pre class="fragment">using (var realmThread = new RealmThread(realmConfig))
+{
+    // Perform some work with the RealmThread
+}
+</pre><p><b>Or:</b> </p><pre class="fragment">var realmThread = new RealmThread(realmConfig);
+// At some future point:
+realmThread.Dispose();
+</pre><h2>Tasks and Continuations</h2>
+<p>To ensure that <code>Task</code> <em>continuations</em> are performed on the same thread, use <code>InvokeAsync</code> when your Task contains other awaited Tasks, otherwise use <code>Invoke</code> or <code>BeginInvoke</code> to execute an <code>Action</code>.</p>
+<p><b>Note:</b> This is a blocking call and will not return till all the queued items up till, including this one along with its continuations are executed. </p><pre class="fragment">await realmThread.InvokeAsync(async r =&gt;
+{
+    await Task.FromResult(true); // Simulate some Task, i.e. a httpclient request.... 
+    // The following continuations will be executed on the proper thread
+    r.Write(() =&gt;
+    {
+        var obj = r.CreateObject&lt;KeyValueRecord&gt;();
+        obj.Key = "key";
+    });
+});
+</pre><h2><code>BeginInvoke</code>: A Non-blocking Action:</h2>
+<p><code>BeginInvoke</code> will queue an <code>Action</code> and immediately return (<code>Fire &amp; Forget</code>).</p>
+<p><b>Note:</b> The items in the work queue are executed in the order they were queued (FIFO) and to mantain data integrity they can not be reordered once added. </p><pre class="fragment">realmThread.BeginInvoke(internalRealmOnThread =&gt;
+{
+    internalRealmOnThread.Write(() =&gt;
+    {
+        var obj = internalRealmOnThread.CreateObject&lt;KeyValueRecord&gt;();
+        obj.Key = "key";
+    });
+});
+</pre><h2><code>Invoke</code>: A Blocking Action:</h2>
+<p><code>Invoke</code> will queue an <code>Action</code> and wait till it is executed.</p>
+<p><b>Note:</b> The items in the work queue are executed in the order they were added, so until all the queued items up till and including this one are executed, this call will block. </p><pre class="fragment">realmThread.Invoke(internalRealmOnThread =&gt;
+{
+    internalRealmOnThread.Write(() =&gt;
+    {
+        var obj = internalRealmOnThread.CreateObject&lt;KeyValueRecord&gt;();
+        obj.Key = "key";
+    });
+});
+</pre><h2>Transaction Helpers:</h2>
+<p><code>RealmThread</code> has a built-in <code>Realms.Transaction</code> and a matching set of APIs that can be used instead of using a <code>Realms.Transaction</code> via a <em>captured</em> variable:</p>
+<ul>
+<li>RealmThread.BeginTransaction</li>
+<li>RealmThread.CommitTransaction</li>
+<li>RealmThread.RollbackTransaction</li>
+</ul>
+<p>Example: </p><pre class="fragment">realmThread.BeginTransaction();
+realmThread.Invoke(r =&gt;
+{
+    var obj = r.CreateObject&lt;KeyValueRecord&gt;();
+    obj.Key = "key";
+});
+realmThread.CommitTransaction();
+</pre><h2>Captured variables</h2>
+<p>You can use captured variables within your <code>RealmThread</code>-based Action and Task to <em>pass</em> variables between the calling thread and the internal thread that <code>RealmThread</code> maintains a <code>Realm</code> instance on.</p>
+<p><b>Note:</b> You can not pass a <b>managed</b> <code>RealmObject</code> or <code>RealmResult</code> in this manner as its access has to be made on the same thread it was instanced.</p>
+<p>If needed, you could copy a <b>managed</b> <code>RealmObject</code> to a non-managed <code>RealmObject</code> and use this non-managed <code>RealmObject</code> variable as your captured variable that is passed between threads. </p><pre class="fragment">var keyValueRecord = new KeyValueRecord();
+realmThread.Invoke(r =&gt;
+{
+    var obj = r.ObjectForPrimaryKey&lt;KeyValueRecord&gt;(keyToFind);
+    keyValueRecord.Key = obj.Key;
+    keyValueRecord.Value = obj.Value;
+});
+Console.WriteLine($"{keyValueRecord.Key}:{keyValueRecord.Value}");
+</pre><p>Example of passing a Transaction: </p><pre class="fragment">Transaction trans = null;
+realmThread.Invoke(r =&gt;
+{
+    trans = r.BeginWrite();
+});
+// Start a bunch of RealmObject inserts/edits
+realmThread.Invoke(r =&gt;
+{
+    var obj = r.CreateObject&lt;KeyValueRecord&gt;();
+    obj.Key = "key";
+});
+// Complete the transaction
+t.Invoke(r =&gt;
+{
+    if (trans != null)
+        trans.Commit();
+});
+</pre><h2>Build from Source:</h2>
+<p>From the cmd line using the amazing <a href="http://cakebuild.net">cake</a>: <a href="http://cakebuild.net"></a> </p><div class="code"> ./build.sh -t Build </div><h2>Build Documention:</h2>
 <p>API Reference documention is built via the great <a href="http://www.doxygen.org/index.html"></a></p>
-<div class="code"> ./doxygen Doxygen/realmthread.config </div><h2>Build from Source:</h2>
-<p>Using <a href="http://cakebuild.net">cake</a> from the cmd-line:</p>
-<center><sub>Thread Icon within the RealmThread Logo:</sub><br />
+<div class="code"> doxygen Doxygen/realmthread.config </div><h2>Build Nuget Package:</h2>
+<div class="code"> ./build.sh -t Package </div><h2>Publish Nuget:</h2>
+<pre>
+<div class="code">export NUGET_APIKEY={APIKEY}
+export GITHUB_TOKEN={TOKEN/PASSWORD}
+export GITHUB_USERNAME={EMAILADDRESS}
+export NUGET_SOURCE=<a href="https://www.nuget.org/api/v2/package">https://www.nuget.org/api/v2/package</a>
+./build.sh -t PublishPackages
+</div>
+</pre><center><sub>Thread Icon within the RealmThread Logo:</sub><br />
  <sub> Icons made by <a href="http://www.freepik.com" title="Freepik">Freepik</a> from <a href="http://www.flaticon.com" title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/" title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a> </sub></center><p>&lt;head&gt; &lt;style&gt; .nuget-badge code { -moz-border-radius: 5px; -webkit-border-radius: 5px; background-color: #202020; border: 4px solid silver; border-radius: 5px; box-shadow: 2px 2px 3px #6e6e6e; color: #e2e2e2; display: block; font: 1.0em 'andale mono', 'lucida console', monospace; line-height: 1.5em; overflow: auto; padding: 15px } .nuget-badge code::before { content: "PM&gt; " } .code { -moz-border-radius: 5px; -webkit-border-radius: 5px; background-color: #202020; border: 4px solid silver; border-radius: 5px; box-shadow: 2px 2px 3px #6e6e6e; color: #e2e2e2; display: block; font: 1.0em 'andale mono', 'lucida console', monospace; line-height: 1.5em; overflow: auto; padding: 15px }</p>
 <p>&lt;/style&gt; &lt;/head&gt; </p>
 </div></div><!-- contents -->
