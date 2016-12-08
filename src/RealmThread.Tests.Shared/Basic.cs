@@ -82,9 +82,151 @@ namespace SushiHangover.Tests
 				});
 				t.Invoke(r =>
 				{
-					// Each action contains a Refresh so the record should be automaticially available to this thread
+					// Before each action a Refresh is performed so the record should be automaticially available to this thread
 					Assert.NotNull(r.ObjectForPrimaryKey<KeyValueRecord>("key"));
 				});
+			}
+		}
+
+		[Theory]
+		[Repeat(Utility.COUNT)]
+		[TestMethodName]
+		public void ThreadInvoke_InTransaction()
+		{
+			string path;
+			using (Utility.WithEmptyDirectory(out path))
+			using (var fixture = CreateRealmsInstance(path))
+			using (var t = new RealmThread(fixture.Config))
+			{
+				Assert.False(t.InTransaction);
+				t.BeginTransaction();
+				Assert.True(t.InTransaction);
+			}
+		}
+
+		[Theory]
+		[Repeat(Utility.COUNT)]
+		[TestMethodName]
+		public void ThreadInvoke_InTransaction_AutoCommit()
+		{
+			string path;
+			using (Utility.WithEmptyDirectory(out path))
+			using (var fixture = CreateRealmsInstance(path))
+			{
+				using (var t = new RealmThread(fixture.Config, true))
+				{
+					t.BeginTransaction();
+					t.Invoke(r =>
+					{
+						var obj = r.CreateObject<KeyValueRecord>();
+						obj.Key = "key";
+					});
+				}
+				fixture.Refresh();
+				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+			}
+		}
+
+		[Theory]
+		[Repeat(Utility.COUNT)]
+		[TestMethodName]
+		public void ThreadInvoke_InTransaction_AutoRollback()
+		{
+			string path;
+			using (Utility.WithEmptyDirectory(out path))
+			using (var fixture = CreateRealmsInstance(path))
+			{
+				using (var t = new RealmThread(fixture.Config, false))
+				{
+					t.BeginTransaction();
+					t.Invoke(r =>
+					{
+						var obj = r.CreateObject<KeyValueRecord>();
+						obj.Key = "key";
+					});
+				}
+				fixture.Refresh();
+				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+			}
+		}
+
+		[Theory]
+		[Repeat(Utility.COUNT)]
+		[TestMethodName]
+		public void ThreadInvoke_Transaction_Begin_Commit()
+		{
+			string path;
+			using (Utility.WithEmptyDirectory(out path))
+			using (var fixture = CreateRealmsInstance(path))
+			using (var t = new RealmThread(fixture.Config))
+			{
+				t.BeginTransaction();
+				t.Invoke(r =>
+				{
+					var obj = r.CreateObject<KeyValueRecord>();
+					obj.Key = "key";
+				});
+				fixture.Refresh();
+				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
+				t.CommitTransaction();
+				fixture.Refresh();
+				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should now be available
+			}
+		}
+
+		[Theory]
+		[Repeat(Utility.COUNT)]
+		[TestMethodName]
+		public void ThreadInvoke_Transaction_Begin_RollBack()
+		{
+			string path;
+			using (Utility.WithEmptyDirectory(out path))
+			using (var fixture = CreateRealmsInstance(path))
+			using (var t = new RealmThread(fixture.Config))
+			{
+				t.BeginTransaction();
+				t.Invoke(r =>
+				{
+					var obj = r.CreateObject<KeyValueRecord>();
+					obj.Key = "key";
+				});
+				fixture.Refresh();
+				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
+				t.RollbackTransaction();
+				fixture.Refresh();
+				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available
+			}
+		}
+
+		[Theory]
+		[Repeat(Utility.COUNT)]
+		[TestMethodName]
+		public void ThreadInvoke_Transaction_ViaCapturedVariable()
+		{
+			string path;
+			using (Utility.WithEmptyDirectory(out path))
+			using (var fixture = CreateRealmsInstance(path))
+			using (var t = new RealmThread(fixture.Config))
+			{
+				Transaction trans = null;
+				t.Invoke(r =>
+				{
+					trans = r.BeginWrite();
+				});
+				t.Invoke(r =>
+				{
+					var obj = r.CreateObject<KeyValueRecord>();
+					obj.Key = "key";
+				});
+				fixture.Refresh();
+				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
+				t.Invoke(r =>
+				{
+					if (trans != null)
+						trans.Commit();
+				});
+				fixture.Refresh();
+				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should now be available
 			}
 		}
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,18 +12,42 @@ namespace SushiHangover
 	{
 		readonly BlockingCollection<RealmWork> workQueue;
 		readonly InternalThread realmThread;
+		readonly bool autoCommmitOnDispose;
+
+		/// <summary>
+		/// Gets the managed thread identifier.
+		/// </summary>
+		/// <value>The managed thread identifier.</value>
 		public int ManagedThreadId
 		{
 			get { return realmThread.ManagedThreadId; }
 		}
 
 		/// <summary>
+		/// Gets a value indicating whether this <see cref="T:SushiHangover.RealmThread"/> is in transaction.
+		/// </summary>
+		/// <value><c>true</c> if in transaction; otherwise, <c>false</c>.</value>
+		public bool InTransaction
+		{
+			get { return realmThread.InTransaction; }
+		}
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
-		/// <param name="realm">Realm.</param>
-		public RealmThread(Realms.RealmConfiguration realmConfig)
+		/// <param name="realm">RealmConfiguration</param>
+		public RealmThread(Realms.RealmConfiguration realmConfig) : this(realmConfig, false)
 		{
-			////D.WriteLine("RealmThread Constructor");
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
+		/// </summary>
+		/// <param name="realmConfig">RealmConfiguration</param>
+		/// <param name="autoCommmit">If set to <c>true</c> auto commmit open transaction on Dispose</param>
+		public RealmThread(Realms.RealmConfiguration realmConfig, bool autoCommmit)
+		{
+			autoCommmitOnDispose = autoCommmit;
 			workQueue = new BlockingCollection<RealmWork>();
 			realmThread = new InternalThread(workQueue);
 			realmThread.Start(realmConfig);
@@ -75,6 +99,80 @@ namespace SushiHangover
 			}
 		}
 
+		/// <summary>
+		/// Begin a Realm transaction on this thread.
+		/// </summary>
+		public void BeginTransaction()
+		{
+			if (InTransaction) throw new RealmThreadInTransaction("Currently this RealmThread is already in a transaction");
+
+			Action<Realms.Realm> action = (r) =>
+			{
+				realmThread.trans = r.BeginWrite();
+			};
+
+			using (var waitEvent = new ManualResetEventSlim(false))
+			{
+				var workItem = new RealmWork(action, waitEvent);
+				workQueue.Add(workItem);
+				waitEvent.Wait();
+			}
+		}
+
+		/// <summary>
+		/// Commits the Realm transaction that is active on this thread.
+		/// </summary>
+		public void CommitTransaction()
+		{
+			if (!InTransaction) throw new RealmThreaNoTransaction("No active transaction on this thread");
+
+			Action<Realms.Realm> action = r =>
+			{
+				try
+				{
+					realmThread.trans.Commit();
+				}
+				finally
+				{
+					realmThread.trans = null;
+				}
+			};
+
+			using (var waitEvent = new ManualResetEventSlim(false))
+			{
+				var workItem = new RealmWork(action, waitEvent);
+				workQueue.Add(workItem);
+				waitEvent.Wait();
+			}
+		}
+
+		/// <summary>
+		/// Rollbacks the Ream transaction that is active on this thread.
+		/// </summary>
+		public void RollbackTransaction()
+		{
+			if (!InTransaction) throw new RealmThreaNoTransaction("No active transaction on this thread");
+
+			Action<Realms.Realm> action = (r) =>
+			{
+				try
+				{
+					realmThread.trans.Rollback();
+				}
+				finally
+				{
+					realmThread.trans = null;
+				}
+			};
+
+			using (var waitEvent = new ManualResetEventSlim(false))
+			{
+				var workItem = new RealmWork(action, waitEvent);
+				workQueue.Add(workItem);
+				waitEvent.Wait();
+			}
+		}
+
 		// TODO: How would you marshall a RealmObject/RealmResults across the thread? 
 		// Create a POCO from a RealmObject? 
 		// or an IEnumerator<POCO> from a RealmResult?
@@ -105,6 +203,10 @@ namespace SushiHangover
 		/// the garbage collector can reclaim the memory that the <see cref="T:SushiHangover.RealmThread"/> was occupying.</remarks>
 		public void Dispose()
 		{
+			if (InTransaction)
+			{
+				if (autoCommmitOnDispose) CommitTransaction(); else RollbackTransaction();
+			}
 			realmThread.Dispose();
 		}
 	}
@@ -114,9 +216,16 @@ namespace SushiHangover
 		readonly Thread _thread;
 		readonly BlockingCollection<RealmWork> _workQueue;
 		int _Id;
+		public Realms.Transaction trans;
+
 		public int ManagedThreadId
 		{
 			get { return _Id; }
+		}
+
+		public bool InTransaction
+		{
+			get { return trans != null; }
 		}
 
 		public InternalThread(BlockingCollection<RealmWork> workQueue)

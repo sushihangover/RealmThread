@@ -66,6 +66,7 @@
   <ItemGroup>
     <AndroidResource Include="Resources\values\Strings.xml" />
   </ItemGroup>
+  <Import Project="..\RealmThread.Portable.Shared\RealmThread.Portable.Shared.projitems" Label="Shared" Condition="Exists('..\RealmThread.Portable.Shared\RealmThread.Portable.Shared.projitems')" />
   <Import Project="..\RealmThread.Shared\RealmThread.Shared.projitems" Label="Shared" Condition="Exists('..\RealmThread.Shared\RealmThread.Shared.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <Import Project="..\packages\Fody.1.29.4\build\dotnet\Fody.targets" Condition="Exists('..\packages\Fody.1.29.4\build\dotnet\Fody.targets')" />
