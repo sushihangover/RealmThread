@@ -4,8 +4,12 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
+
 namespace Realm.Thread.Shared
 {
+	// https://blogs.msdn.microsoft.com/pfxteam/2012/01/20/await-synchronizationcontext-and-console-apps/
+	// by Stephen Toub - MSFT
+
 	/// <summary>Provides a pump that supports running asynchronous methods on the current thread.</summary>
 	public  class AsyncPump
 	{
@@ -13,7 +17,7 @@ namespace Realm.Thread.Shared
 		/// <param name="asyncMethod">The asynchronous method to execute.</param>
 		public static void Run(Action asyncMethod)
 		{
-			if (asyncMethod == null) throw new ArgumentNullException("asyncMethod");
+			if (asyncMethod == null) throw new ArgumentNullException(nameof(asyncMethod));
 
 			var prevCtx = SynchronizationContext.Current;
 			try
@@ -37,7 +41,7 @@ namespace Realm.Thread.Shared
 		/// <param name="asyncMethod">The asynchronous method to execute.</param>
 		public static void Run(Func<Task> asyncMethod)
 		{
-			if (asyncMethod == null) throw new ArgumentNullException("asyncMethod");
+			if (asyncMethod == null) throw new ArgumentNullException(nameof(asyncMethod));
 
 			var prevCtx = SynchronizationContext.Current;
 			try
@@ -62,7 +66,7 @@ namespace Realm.Thread.Shared
 		/// <param name="asyncMethod">The asynchronous method to execute.</param>
 		public T Run<T>(Func<Task<T>> asyncMethod)
 		{
-			if (asyncMethod == null) throw new ArgumentNullException("asyncMethod");
+			if (asyncMethod == null) throw new ArgumentNullException(nameof(asyncMethod));
 
 			var prevCtx = SynchronizationContext.Current;
 			try
@@ -84,15 +88,15 @@ namespace Realm.Thread.Shared
 		}
 
 		/// <summary>Provides a SynchronizationContext that's single-threaded.</summary>
-		private sealed class SingleThreadSynchronizationContext : SynchronizationContext
+		sealed class SingleThreadSynchronizationContext : SynchronizationContext
 		{
 			/// <summary>The queue of work items.</summary>
-			private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue =
+			readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue =
 				new BlockingCollection<KeyValuePair<SendOrPostCallback, object>>();
 			/// <summary>The number of outstanding operations.</summary>
-			private int m_operationCount = 0;
+			int m_operationCount;
 			/// <summary>Whether to track operations m_operationCount.</summary>
-			private readonly bool m_trackOperations;
+			readonly bool m_trackOperations;
 
 			/// <summary>Initializes the context.</summary>
 			/// <param name="trackOperations">Whether to track operation count.</param>
@@ -106,7 +110,7 @@ namespace Realm.Thread.Shared
 			/// <param name="state">The object passed to the delegate.</param>
 			public override void Post(SendOrPostCallback d, object state)
 			{
-				if (d == null) throw new ArgumentNullException("d");
+				if (d == null) throw new ArgumentNullException(nameof(d));
 				m_queue.Add(new KeyValuePair<SendOrPostCallback, object>(d, state));
 			}
 

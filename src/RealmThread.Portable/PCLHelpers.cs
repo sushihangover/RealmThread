@@ -1,7 +1,7 @@
 ﻿using System;
 namespace SushiHangover
 {
-	internal static class PCLHelpers
+	static class PCLHelpers
 	{
 		internal static void ThrowProxyShouldNeverBeUsed()
 		{

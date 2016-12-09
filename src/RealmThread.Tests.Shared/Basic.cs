@@ -1,17 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Reactive.Linq;
+using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
+using Realms;
 using Xunit;
 using Xunit.Sdk;
-using System.Reflection;
-using System.Reactive;
-using Realms;
-using Log = System.Diagnostics.Debug;
-using System.Threading;
 
 namespace SushiHangover.Tests
 {

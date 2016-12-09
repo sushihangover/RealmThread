@@ -9,7 +9,7 @@ namespace SushiHangover.Tests
 	// http://stackoverflow.com/questions/31873778/xunit-test-fact-multiple-times
 	public class RepeatAttribute : DataAttribute
 	{
-		readonly int _count;
+		readonly int count;
 
 		public RepeatAttribute(int count)
 		{
@@ -17,12 +17,12 @@ namespace SushiHangover.Tests
 			{
 				throw new ArgumentOutOfRangeException(nameof(count), "Repeat count must be greater than 0.");
 			}
-			_count = count;
+			this.count = count;
 		}
 
 		public override IEnumerable<object[]> GetData(MethodInfo testMethod)
 		{
-			return Enumerable.Repeat(new object[0], _count);
+			return Enumerable.Repeat(new object[0], count);
 		}
 	}
 }

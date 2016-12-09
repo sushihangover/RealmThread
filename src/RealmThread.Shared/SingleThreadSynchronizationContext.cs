@@ -2,26 +2,24 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
-using D = System.Diagnostics.Debug;
-
-// https://blogs.msdn.microsoft.com/pfxteam/2012/01/20/await-synchronizationcontext-and-console-apps/
 
 namespace SushiHangover
 {
+	// https://blogs.msdn.microsoft.com/pfxteam/2012/01/20/await-synchronizationcontext-and-console-apps/
+	// by Stephen Toub - MSFT
+
 	/// <summary>Provides a SynchronizationContext that's single-threaded.</summary>
 	sealed class SingleThreadSynchronizationContext : SynchronizationContext
 	{
 		/// <summary>The queue of work items.</summary>
-		private readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue =
+		readonly BlockingCollection<KeyValuePair<SendOrPostCallback, object>> m_queue =
 			new BlockingCollection<KeyValuePair<SendOrPostCallback, object>>();
-		
-		/// <summary>The processing thread.</summary>
-		//private readonly Thread m_thread = Thread.CurrentThread;
 
 		/// <summary>The number of outstanding operations.</summary>
-		private int m_operationCount = 0;
+		int m_operationCount;
+
 		/// <summary>Whether to track operations m_operationCount.</summary>
-		private readonly bool m_trackOperations;
+		readonly bool m_trackOperations;
 
 		/// <summary>Initializes the context.</summary>
 		/// <param name="trackOperations">Whether to track operation count.</param>
@@ -35,7 +33,7 @@ namespace SushiHangover
 		/// <param name="state">The object passed to the delegate.</param>
 		public override void Post(SendOrPostCallback d, object state)
 		{
-			if (d == null) throw new ArgumentNullException("d");
+			if (d == null) throw new ArgumentNullException(nameof(d));
 			m_queue.Add(new KeyValuePair<SendOrPostCallback, object>(d, state));
 		}
 

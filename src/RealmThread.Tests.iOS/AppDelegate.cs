@@ -23,7 +23,7 @@ namespace RealmThread.Tests.iOS
         //
         // You have 17 seconds to return from this method, or iOS will terminate your application.
         //
-        public override bool FinishedLaunching(UIApplication app, NSDictionary options)
+        public override bool FinishedLaunching(UIApplication uiApplication, NSDictionary launchOptions)
         {
             // We need this to ensure the execution assembly is part of the app bundle
             AddExecutionAssembly(typeof(ExtensibilityPointFactory).Assembly);
@@ -43,7 +43,7 @@ namespace RealmThread.Tests.iOS
 			// crash the application (to ensure it's ended) and return to springboard
 			TerminateAfterExecution = true;
 #endif
-            return base.FinishedLaunching(app, options);
+            return base.FinishedLaunching(uiApplication, launchOptions);
 		}
     }
 }

@@ -19,11 +19,13 @@ namespace SushiHangover.Tests
 
         public static string GetIntegrationTestRootDirectory()
         {
-            // XXX: This is an evil hack, but it's okay for a unit test
-            // We can't use Assembly.Location because unit test runners love
-            // to move stuff to temp directories
-            var st = new StackFrame(true);
-            var di = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(st.GetFileName())));
+			// XXX: This is an evil hack, but it's okay for a unit test
+			// We can't use Assembly.Location because unit test runners love
+			// to move stuff to temp directories
+#pragma warning disable XS0001 // Find usages of mono todo items
+			var st = new StackFrame(true);
+#pragma warning restore XS0001 // Find usages of mono todo items
+			var di = new DirectoryInfo(Path.Combine(Path.GetDirectoryName(st.GetFileName())));
 
             return di.FullName;
         }
