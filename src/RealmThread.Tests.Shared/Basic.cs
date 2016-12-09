@@ -15,7 +15,7 @@ using System.Threading;
 
 namespace SushiHangover.Tests
 {
-	public abstract class Core : IClassFixture<GCFixture>, IDisposable
+	public abstract class Basic : IClassFixture<GCFixture>, IDisposable
 	{
 		//protected static Dictionary<int, long> results;
 		//protected static string dbName;
@@ -113,14 +113,18 @@ namespace SushiHangover.Tests
 			using (Utility.WithEmptyDirectory(out path))
 			using (var fixture = CreateRealmsInstance(path))
 			{
-				using (var t = new RealmThread(fixture.Config, true))
+				using (var realmThread = new RealmThread(fixture.Config, true))
 				{
-					t.BeginTransaction();
-					t.Invoke(r =>
+					realmThread.BeginTransaction();
+					var keyValueRecord = new KeyValueRecord(); // a captured variable
+					realmThread.Invoke(r =>
 					{
 						var obj = r.CreateObject<KeyValueRecord>();
 						obj.Key = "key";
+						keyValueRecord.Key = obj.Key;
 					});
+					Console.WriteLine($"{keyValueRecord.Key}:{keyValueRecord.Value}");
+					Assert.Equal("key", keyValueRecord.Key);
 				}
 				fixture.Refresh();
 				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
@@ -329,7 +333,7 @@ namespace SushiHangover.Tests
 
 	}
 
-	public class RealmThreadCore : Core, IDisposable
+	public class RealmThreadBasic : Basic, IDisposable
 	{
 		protected override Realms.Realm CreateRealmsInstance(string path)
 		{
