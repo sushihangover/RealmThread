@@ -23,8 +23,6 @@ namespace SushiHangover.Tests
 		[TestMethodName]
 		public async Task Write_Read_Parallel_On_Different_Threads()
 		{
-			// Hack: Limit size due to huge Realm files being created...
-			//PerfHelper.MaxRange = 10;
 			await GeneratePerfRangesForRealm(async (cache, size) =>
 			{
 				await cache.WriteAsync((obj) =>
@@ -68,7 +66,7 @@ namespace SushiHangover.Tests
 								{
 									// Refresh() is automatically called at the beginning of each BeginInvoke, 
 									// so if we are within the RealmPump block and need to see the latest changes 
-									// from other Realm instances, call Refresh manaully
+									// from other Realm instances, call Refresh manually
 									threadSafeReadRealm.Refresh();
 									var record = threadSafeReadRealm.ObjectForPrimaryKey<KeyValueRecord>(key);
 									Assert.NotNull(record);
@@ -81,7 +79,6 @@ namespace SushiHangover.Tests
 				st.Stop();
 				return st.ElapsedMilliseconds;
 			});
-			//PerfHelper.MaxRange = 12;
 		}
 
 		[Theory]
@@ -100,18 +97,17 @@ namespace SushiHangover.Tests
 				{
 					using (var realmThread = new RealmThread(cache.Config))
 					{
+						realmThread.BeginTransaction();
 						realmThread.BeginInvoke((threadSafeRealm) =>
 						{
-							threadSafeRealm.Write(() =>
+							foreach (var kvp in toWrite)
 							{
-								foreach (var kvp in toWrite)
-								{
-									var obj = threadSafeRealm.CreateObject(typeof(KeyValueRecord).Name);
-									obj.Key = kvp.Key;
-									obj.Value = kvp.Value;
-								}
-							});
+								var obj = threadSafeRealm.CreateObject(typeof(KeyValueRecord).Name);
+								obj.Key = kvp.Key;
+								obj.Value = kvp.Value;
+							}
 						});
+						realmThread.CommitTransaction();
 					}
 				});
 

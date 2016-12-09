@@ -89,7 +89,7 @@ var realmThread = new RealmThread(realmConfig);
 </pre><p><b>Or:</b> </p><pre class="fragment">var realmThread = new RealmThread(realmConfig);
 // At some future point:
 realmThread.Dispose();
-</pre><h2>Tasks and Continuations</h2>
+</pre><h2><code>InvokeAsync</code>: Tasks and Continuations</h2>
 <p>To ensure that <code>Task</code> <em>continuations</em> are performed on the same thread, use <code>InvokeAsync</code> when your Task contains other awaited Tasks, otherwise use <code>Invoke</code> or <code>BeginInvoke</code> to execute an <code>Action</code>.</p>
 <p><b>Note:</b> This is a blocking call and will not return till all the queued items up till, including this one along with its continuations are executed. </p><pre class="fragment">await realmThread.InvokeAsync(async r =&gt;
 {
@@ -121,24 +121,38 @@ realmThread.Dispose();
         obj.Key = "key";
     });
 });
-</pre><h2>Transaction Helpers:</h2>
+</pre><h2>Transaction Helpers</h2>
 <p><code>RealmThread</code> has a built-in <code>Realms.Transaction</code> and a matching set of APIs that can be used instead of using a <code>Realms.Transaction</code> via a <em>captured</em> variable:</p>
 <ul>
-<li>RealmThread.BeginTransaction</li>
-<li>RealmThread.CommitTransaction</li>
-<li>RealmThread.RollbackTransaction</li>
+<li>Methods:<ul>
+<li><code>BeginTransaction</code></li>
+<li><code>CommitTransaction</code></li>
+<li><code>RollbackTransaction</code></li>
 </ul>
-<p>Example: </p><pre class="fragment">realmThread.BeginTransaction();
+</li>
+<li>Properties:<ul>
+<li><code>InTransaction</code></li>
+</ul>
+</li>
+</ul>
+<h4>Example:</h4>
+<pre class="fragment">realmThread.BeginTransaction();
 realmThread.Invoke(r =&gt;
 {
     var obj = r.CreateObject&lt;KeyValueRecord&gt;();
     obj.Key = "key";
 });
-realmThread.CommitTransaction();
-</pre><h2>Captured variables</h2>
-<p>You can use captured variables within your <code>RealmThread</code>-based Action and Task to <em>pass</em> variables between the calling thread and the internal thread that <code>RealmThread</code> maintains a <code>Realm</code> instance on.</p>
-<p><b>Note:</b> You can not pass a <b>managed</b> <code>RealmObject</code> or <code>RealmResult</code> in this manner as its access has to be made on the same thread it was instanced.</p>
-<p>If needed, you could copy a <b>managed</b> <code>RealmObject</code> to a non-managed <code>RealmObject</code> and use this non-managed <code>RealmObject</code> variable as your captured variable that is passed between threads. </p><pre class="fragment">var keyValueRecord = new KeyValueRecord();
+if (realmThread.InTransaction)
+{
+    realmThread.CommitTransaction();
+}
+</pre><h4>**NOTE:** When a <code>RealmThread</code> object is disposed, if the built-in transaction is open, it will perform a **<code>Rollback</code>**. If you wish to override this behavoir, when creating a <code>RealmThread</code>, set the <code>autoCommit</code> parameter in the constructor to <code>true</code>.</h4>
+<h2>Captured variables</h2>
+<p>You can use captured variables within your <code>RealmThread</code>-based <code>Action</code> and <code>Task</code> to <em>pass</em> variables between the calling thread and the internal thread that <code>RealmThread</code> maintains a <code>Realm</code> instance on.</p>
+<p>You can not pass a <b>managed</b> <code>RealmObject</code> or <code>RealmResult</code> in this manner as its access has to be made on the same thread it was instanced.</p>
+<p>If needed, you could copy a <b>managed</b> <code>RealmObject</code> to a non-managed <code>RealmObject</code> and use this non-managed <code>RealmObject</code> variable as your captured variable that is passed between threads.</p>
+<h3>Non-managed RealmObject amoung threads:</h3>
+<pre class="fragment">var keyValueRecord = new KeyValueRecord();
 realmThread.Invoke(r =&gt;
 {
     var obj = r.ObjectForPrimaryKey&lt;KeyValueRecord&gt;(keyToFind);
@@ -146,7 +160,8 @@ realmThread.Invoke(r =&gt;
     keyValueRecord.Value = obj.Value;
 });
 Console.WriteLine($"{keyValueRecord.Key}:{keyValueRecord.Value}");
-</pre><p>Example of passing a Transaction: </p><pre class="fragment">Transaction trans = null;
+</pre><h3>Example of passing a Transaction:</h3>
+<p><b>Note:</b> This was the primary way to control a <code>Transaction</code> over multiple invokes before the Transaction helper api was added. </p><pre class="fragment">Transaction trans = null;
 realmThread.Invoke(r =&gt;
 {
     trans = r.BeginWrite();
@@ -163,6 +178,47 @@ t.Invoke(r =&gt;
     if (trans != null)
         trans.Commit();
 });
+</pre><h2>Parallel Write / Read Example:</h2>
+<p>While this is a contrived example, it shows one <code>RealmThread</code> being used to only add records and another being used to read these new records.</p>
+<p><b>Note:</b> The <code>toWrite</code> variable is a pre-populated <code>Dictionary&lt;string, byte[]&gt;</code>, see the performace tests in the source repo, within the <code>RealmThread.Tests.Shared</code> project, for creation details... </p><pre class="fragment">using (var blockingQueue = new BlockingCollection&lt;string&gt;())
+using (var realmThreadWrite = new RealmThread(aRealmInstance.Config))
+using (var realmThreadRead = new RealmThread(aRealmInstance.Config))
+{
+    Parallel.Invoke(() =&gt;
+    {
+        realmThreadWrite.Invoke(threadSafeWriteRealm =&gt;
+        {
+            foreach (var kvp in toWrite)
+            {
+                // Individual record write transactions so the other RealmThread can read asap
+                threadSafeWriteRealm.Write(() =&gt;
+                {
+                    var obj = threadSafeWriteRealm.CreateObject(typeof(KeyValueRecord).Name);
+                    obj.Key = kvp.Key;
+                    obj.Value = kvp.Value;
+                });
+                blockingQueue.Add(kvp.Key);
+            }
+            blockingQueue.CompleteAdding();
+        });
+    },
+    () =&gt;
+    {
+        realmThreadRead.Invoke((threadSafeReadRealm) =&gt;
+        {
+            foreach (var key in blockingQueue.GetConsumingEnumerable())
+            {
+                // Refresh() is automatically called at the beginning of each BeginInvoke/Invoke, 
+                // so if we are within the RealmPump block and need to see the latest changes 
+                // from other Realm instances, call Refresh manually
+                threadSafeReadRealm.Refresh();
+                var record = threadSafeReadRealm.ObjectForPrimaryKey&lt;KeyValueRecord&gt;(key);
+                Assert.NotNull(record);
+                Assert.Equal(key, record.Key);
+            }
+        });
+    });
+}
 </pre><h2>Build from Source:</h2>
 <p>From the cmd line using the amazing <a href="http://cakebuild.net">cake</a>: <a href="http://cakebuild.net"></a> </p><div class="code"> ./build.sh -t Build </div><h2>Build Documention:</h2>
 <p>API Reference documention is built via the great <a href="http://www.doxygen.org/index.html"></a></p>
