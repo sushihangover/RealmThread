@@ -53,7 +53,7 @@ namespace SushiHangover
 		}
 
 		/// <summary>
-		/// Invokes a "Fire & Forget" Action on a dedicated Realm thread.
+		/// Invokes a 'Fire and Forget' Action on a dedicated Realm thread.
 		/// </summary>
 		/// <param name="action">Action.</param>
 		public void BeginInvoke(Action<Realms.Realm> action)

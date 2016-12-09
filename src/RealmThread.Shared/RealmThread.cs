@@ -35,7 +35,7 @@ namespace SushiHangover
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
-		/// <param name="realm">RealmConfiguration</param>
+		/// <param name="realmConfig">RealmConfiguration</param>
 		public RealmThread(Realms.RealmConfiguration realmConfig) : this(realmConfig, false)
 		{
 		}
@@ -54,7 +54,7 @@ namespace SushiHangover
 		}
 
 		/// <summary>
-		/// Invokes a "Fire & Forget" Action on an independent Realm thread.
+		/// Invokes a 'Fire and Forget' Action on an independent Realm thread.
 		/// </summary>
 		/// <param name="action">Action.</param>
 		public void BeginInvoke(Action<Realms.Realm> action)
@@ -213,14 +213,14 @@ namespace SushiHangover
 
 	class InternalThread : IDisposable
 	{
-		readonly Thread _thread;
-		readonly BlockingCollection<RealmWork> _workQueue;
-		int _Id;
+		readonly Thread thread;
+		readonly BlockingCollection<RealmWork> workQueue;
+		int managedThreadId;
 		public Realms.Transaction trans;
 
 		public int ManagedThreadId
 		{
-			get { return _Id; }
+			get { return managedThreadId; }
 		}
 
 		public bool InTransaction
@@ -230,31 +230,28 @@ namespace SushiHangover
 
 		public InternalThread(BlockingCollection<RealmWork> workQueue)
 		{
-			_workQueue = workQueue;
-			_thread = new Thread(new ParameterizedThreadStart(Run));
-			_thread.Name = "Realm Worker Thread";
+			this.workQueue = workQueue;
+			thread = new Thread(new ParameterizedThreadStart(Run));
+			thread.Name = "Realm Worker Thread";
 		}
 
 		public void Start(object realm)
 		{
-			_thread?.Start(realm);
+			thread?.Start(realm);
 		}
 
 		public void Join()
 		{
-			_thread?.Join();
+			thread?.Join();
 		}
 
 		public void Run(object parentRealmConfig)
 		{
-			_Id = Thread.CurrentThread.ManagedThreadId;
+			managedThreadId = Thread.CurrentThread.ManagedThreadId;
 			using (var localRealm = Realms.Realm.GetInstance(parentRealmConfig as Realms.RealmConfiguration))
 			{
-
-				//D.WriteLine($"RealmThread Starting Thread: {_Id}");
-				foreach (var workItem in _workQueue.GetConsumingEnumerable())
+				foreach (var workItem in workQueue.GetConsumingEnumerable())
 				{
-					//D.WriteLine($"RealmThread Start Action: {_Id}");
 					localRealm.Refresh();
 
 					var prevCtx = SynchronizationContext.Current;
@@ -311,25 +308,23 @@ namespace SushiHangover
 					{
 						SynchronizationContext.SetSynchronizationContext(prevCtx);
 					}
-					//D.WriteLine($"RealmThread Finish Action: {_Id}");
 				}
-				//D.WriteLine($"RealmThread Stopping Thread: {_Id}");
 			}
 		}
 
 		public void Stop()
 		{
-			_workQueue.CompleteAdding();
+			workQueue.CompleteAdding();
 		}
 
 		public void Dispose()
 		{
-			if (_workQueue != null && !_workQueue.IsCompleted)
+			if (workQueue != null && !workQueue.IsCompleted)
 			{
-				_workQueue.CompleteAdding();
+				workQueue.CompleteAdding();
 			}
-			_thread.Join();
-			_workQueue.Dispose();
+			thread.Join();
+			workQueue.Dispose();
 		}
 	}
 

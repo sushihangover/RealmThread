@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using Realms;
 using Xunit;
 using Xunit.Sdk;
-using Log = System.Diagnostics.Debug;
 
 namespace SushiHangover.Tests
 {
@@ -229,7 +228,7 @@ namespace SushiHangover.Tests
 					foreach (var item in toWrite)
 					{
 						var c = new KeyValueRecord { Key = item.Key, Value = item.Value };
-						realm.Manage<KeyValueRecord>(c); // update: false
+						realm.Manage(c); // update: false
 					}
 				});
 				foreach (var k in toWrite.Keys) ret.Add(k);

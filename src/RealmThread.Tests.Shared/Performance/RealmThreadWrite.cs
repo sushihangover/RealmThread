@@ -7,7 +7,6 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
-using Log = System.Diagnostics.Debug;
 
 namespace SushiHangover.Tests
 {

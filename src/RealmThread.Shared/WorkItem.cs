@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 
 namespace SushiHangover
 {
-
 	public class WorkItem<T, RO>
 	{
 		readonly public Action<T> WorkAction;
