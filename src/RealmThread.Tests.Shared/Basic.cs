@@ -284,7 +284,7 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task ThreadInvokeAsync2()
+		public async Task ThreadInvokeAsync_SingleContinuation()
 		{
 			string path;
 			using (Utility.WithEmptyDirectory(out path))
@@ -298,6 +298,46 @@ namespace SushiHangover.Tests
 					{
 						var obj = r.CreateObject<KeyValueRecord>();
 						obj.Key = "key";
+					});
+				});
+				t.Invoke(r =>
+				{
+					Assert.NotNull(r.ObjectForPrimaryKey<KeyValueRecord>("key"));
+				});
+				fixture.Refresh();
+				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+			}
+		}
+
+		[Theory]
+		[Repeat(Utility.COUNT)]
+		[TestMethodName]
+		public async Task ThreadInvokeAsync_MultipleContinuations()
+		{
+			string path;
+			using (Utility.WithEmptyDirectory(out path))
+			using (var fixture = CreateRealmsInstance(path))
+			using (var t = new RealmThread(fixture.Config))
+			{
+				await t.InvokeAsync(async r =>
+				{
+					await Task.FromResult(true); // Simulate some Task, i.e. a httpclient request.... 
+					r.Write(() =>
+					{
+						var obj = r.CreateObject<KeyValueRecord>();
+						obj.Key = "key";
+					});
+					await Task.Delay(1);
+					r.Write(() =>
+					{
+						var obj = r.CreateObject<KeyValueRecord>();
+						obj.Key = "key2";
+					});
+					await Task.Delay(1);
+					r.Write(() =>
+					{
+						var obj = r.CreateObject<KeyValueRecord>();
+						obj.Key = "key3";
 					});
 				});
 				t.Invoke(r =>
