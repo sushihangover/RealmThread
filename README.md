@@ -5,6 +5,8 @@
 
 **An Action/Task Message Pump for running commands on a dedicated Realm thread.**
 
+[![Join the chat at https://gitter.im/RealmThread/Lobby](https://badges.gitter.im/RealmThread/Lobby.svg)](https://gitter.im/RealmThread/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) [![Build status](https://ci.appveyor.com/api/projects/status/dtbnjnda7h115bjv/branch/master?svg=true)](https://ci.appveyor.com/project/sushihangover/realmthread/branch/master)
+
 ## GitHub Repo
 
 [https://github.com/sushihangover/RealmThread](https://github.com/sushihangover/RealmThread)

@@ -13,6 +13,7 @@ using System.Threading;
 //////////////////////////////////////////////////////////////////////
 
 #tool "nuget:?package=Cake.AppleSimulator.SushiHangover"
+#tool "nuget:?package=SushiHangover.RealmThread"
 #tool "nuget:?package=xunit.runner.console"
 #tool "nuget:?package=GitVersion.CommandLine"
 #tool "GitReleaseManager"
@@ -112,7 +113,7 @@ Action<string> SourceLink = (solutionFileName) =>
 
 Action<string, string, string> buildThisApp = (p,c,t) =>
 {
-    Information(string.Format($"{t}|{c}|{p}"));
+    Information("{0}:{1}:{2}", t,c,p);
     if (isRunningOnMacOS)
     {
         var settings = new XBuildSettings()
@@ -133,7 +134,7 @@ Action<string, string> unitTestApp = (bundleId, appPath) =>
     var setting = new SimCtlSettings() { ToolPath = FindXCodeTool("simctl") };
     var simulators = ListAppleSimulators(setting);
     var device = simulators.First(x => x.Name == "xUnit Runner" & x.Runtime == "iOS 10.1");
-    Information(string.Format($"Name={device.Name}, UDID={device.UDID}, Runtime={device.Runtime}, Availability={device.Availability}"));
+    // Information(string.Format($"Name={device.Name}, UDID={device.UDID}, Runtime={device.Runtime}, Availability={device.Availability}"));
 
     Information("LaunchAppleSimulator");
     LaunchAppleSimulator(device.UDID);
@@ -162,7 +163,7 @@ Action<string, string> unitTestApp = (bundleId, appPath) =>
         bundleId,
         setting);
     Information("Test Results:");
-    Information(string.Format($"Tests Run:{testResults.Run} Passed:{testResults.Passed} Failed:{testResults.Failed} Skipped:{testResults.Skipped} Inconclusive:{testResults.Inconclusive}"));    
+    // Information(string.Format($"Tests Run:{testResults.Run} Passed:{testResults.Passed} Failed:{testResults.Failed} Skipped:{testResults.Skipped} Inconclusive:{testResults.Inconclusive}"));    
 
     Information("UninstalliOSApplication");
     UninstalliOSApplication(
@@ -175,7 +176,7 @@ Action<string, string> unitTestApp = (bundleId, appPath) =>
 
     if (testResults.Run > 0 && testResults.Failed > 0) 
     {
-	    Information(string.Format($"Tests Run:{testResults.Run} Passed:{testResults.Passed} Failed:{testResults.Failed} Skipped:{testResults.Skipped} Inconclusive:{testResults.Inconclusive}"));    
+	    // Information(string.Format($"Tests Run:{testResults.Run} Passed:{testResults.Passed} Failed:{testResults.Failed} Skipped:{testResults.Skipped} Inconclusive:{testResults.Inconclusive}"));    
 		TestFailuresAbort();
     }
 };
@@ -261,54 +262,6 @@ Task("RestorePackages").Does (() =>
     RestorePackages("./src/SushiHangover.RealmThread.sln");
 });
 
-// Task("RunUnitTests_iOS")
-//     //.IsDependentOn("Build")
-//     .Does(() =>
-// {
-//     var bundleID = "com.sushhangover.realmthread-tests-ios";
-
-//     var setting = new SimCtlSettings() { ToolPath = FindXCodeTool("simctl") };
-//     var simulators = ListAppleSimulators(setting);
-//     var device = simulators.First(x => x.Name == "xUnit Runner" & x.Runtime == "iOS 10.1");
-//     Information(string.Format($"Name={device.Name}, UDID={device.UDID}, Runtime={device.Runtime}, Availability={device.Availability}"));
-//     LaunchAppleSimulator(device.UDID);
-//     Thread.Sleep(60 * 1000);
-
-//     UninstalliOSApplication(
-//         device.UDID, 
-//         bundleID
-//         setting);
-
-//    Thread.Sleep(5 * 1000);
-
-//     InstalliOSApplication(
-//         device.UDID,
-//         // "/Users/sushi/code/sushi/SushiHangover.RealmThread/src/RealmThread.Tests.iOS/bin/iPhoneSimulator/Debug/RealmThread.Tests.iOS.app",
-//         setting);
-
-//    // The request was denied by service delegate (SBMainWorkspace) for reason: 
-//    // Busy ("Application "cake.applesimulator.test-xunit" is installing or uninstalling, and cannot be launched").     
-//    Thread.Sleep(5 * 1000);
-
-//     var testResults = TestiOSApplication(
-//         device.UDID, 
-//         bundleID,
-//         setting);
-//     Information(string.Format($"Tests Run:{testResults.Run} Passed:{testResults.Passed} Failed:{testResults.Failed} Skipped:{testResults.Skipped} Inconclusive:{testResults.Inconclusive}"));    
-
-//     UninstalliOSApplication(
-//         device.UDID, 
-//         bundleID,
-//         setting);
-
-//     ShutdownAllAppleSimulators();
-
-//     if (testResults.Run > 0 && testResults.Failed > 0)
-//     {
-//         throw new Exception(string.Format($"Tests Run:{testResults.Run} Passed:{testResults.Passed} Failed:{testResults.Failed} Skipped:{testResults.Skipped} Inconclusive:{testResults.Inconclusive}"));
-//     }
-// });
-
 Task("RunUnitTests")
     .IsDependentOn("Build")
     .Does(() =>
@@ -324,7 +277,7 @@ Task("Package")
     .IsDependentOn("RunUnitTests")
     .Does (() =>
 {
-    Package("./SushiHangover.RealmThread.nuspec", "./");
+    Package("./src/SushiHangover.RealmThread.nuspec", "./src");
 });
 
 Task("PublishPackages")
@@ -464,13 +417,13 @@ Task("UnitTestiOSApp")
 // TASK TARGETS
 //////////////////////////////////////////////////////////////////////
 
-// Task("Default")
-//     .IsDependentOn("CreateRelease")
-//     .IsDependentOn("PublishPackages")
-//     .IsDependentOn("PublishRelease")
-//     .Does (() =>
-// {
-// });
+Task("Default")
+    .IsDependentOn("CreateRelease")
+    .IsDependentOn("PublishPackages")
+    .IsDependentOn("PublishRelease")
+    .Does (() =>
+{
+});
 
 //////////////////////////////////////////////////////////////////////
 // EXECUTION

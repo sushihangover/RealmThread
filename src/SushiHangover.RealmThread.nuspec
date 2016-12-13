@@ -13,8 +13,8 @@
     <summary>An Action/Task Message Pump for running commands on a dedicated Realm thread</summary>
   </metadata>
   <files>
-    <file src="src/RealmThread.Portable/bin/Debug/SushiHangover.RealmThread.???" target="lib/portable-net45+sl5+wp8+wpa81+win8+monoandroid+Xamarin.iOS10+monotouch+Xamarin.Mac" />
-    <file src="src/RealmThread.Android/bin/Debug/SushiHangover.RealmThread.???" target="lib/MonoAndroid" />
-    <file src="src/RealmThread.iOS/bin/Debug/SushiHangover.RealmThread.???" target="lib/Xamarin.iOS10" />
+    <file src="RealmThread.Portable/bin/Release/SushiHangover.RealmThread.???" target="lib/portable-net45+sl5+wp8+wpa81+win8+monoandroid+Xamarin.iOS10+monotouch+Xamarin.Mac" />
+    <file src="RealmThread.Android/bin/Release/SushiHangover.RealmThread.???" target="lib/MonoAndroid" />
+    <file src="RealmThread.iOS/bin/Release/SushiHangover.RealmThread.???" target="lib/Xamarin.iOS10" />
   </files>
 </package>
