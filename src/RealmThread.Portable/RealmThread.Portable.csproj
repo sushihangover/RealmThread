@@ -22,10 +22,18 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'UnitTesting|AnyCPU' ">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\UnitTesting</OutputPath>
+    <WarningLevel>4</WarningLevel>
+    <AssemblyName>RealmThread.Portable</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="PCLHelpers.cs" />
