@@ -12,10 +12,7 @@ namespace SushiHangover.Tests
 {
 	public abstract class Basic : IClassFixture<GCFixture>, IDisposable
 	{
-		//protected static Dictionary<int, long> results;
-		//protected static string dbName;
 		protected static string nameOfRunningTest;
-		//readonly Random prng = new Random();
 
 		protected abstract Realms.Realm CreateRealmsInstance(string path);
 
@@ -50,8 +47,9 @@ namespace SushiHangover.Tests
 				{
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Manage(obj);
 					});
 				});
 				fixture.Refresh();
@@ -72,8 +70,9 @@ namespace SushiHangover.Tests
 				// Add a record on the current thread
 				fixture.Write(() =>
 				{
-					var obj = fixture.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					fixture.Manage(obj);
 				});
 				t.Invoke(r =>
 				{
@@ -114,8 +113,9 @@ namespace SushiHangover.Tests
 					var keyValueRecord = new KeyValueRecord(); // a captured variable
 					realmThread.Invoke(r =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Manage(obj);
 						keyValueRecord.Key = obj.Key;
 					});
 					Console.WriteLine($"{keyValueRecord.Key}:{keyValueRecord.Value}");
@@ -140,8 +140,9 @@ namespace SushiHangover.Tests
 					t.BeginTransaction();
 					t.Invoke(r =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Manage(obj);
 					});
 				}
 				fixture.Refresh();
@@ -162,8 +163,9 @@ namespace SushiHangover.Tests
 				t.BeginTransaction();
 				t.Invoke(r =>
 				{
-					var obj = r.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					r.Manage(obj);
 				});
 				fixture.Refresh();
 				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
@@ -186,8 +188,9 @@ namespace SushiHangover.Tests
 				t.BeginTransaction();
 				t.Invoke(r =>
 				{
-					var obj = r.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					r.Manage(obj);
 				});
 				fixture.Refresh();
 				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
@@ -214,8 +217,9 @@ namespace SushiHangover.Tests
 				});
 				t.Invoke(r =>
 				{
-					var obj = r.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					r.Manage(obj);
 				});
 				fixture.Refresh();
 				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
@@ -243,8 +247,9 @@ namespace SushiHangover.Tests
 				{
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Manage(obj);
 					});
 				});
 				t.Invoke(r =>
@@ -268,8 +273,9 @@ namespace SushiHangover.Tests
 				{
 					await r.WriteAsync((aNewRealm) =>
 					{
-						var obj = aNewRealm.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						aNewRealm.Manage(obj);
 					});
 				});
 				t.Invoke(r =>
@@ -296,8 +302,9 @@ namespace SushiHangover.Tests
 					await Task.FromResult(true); // Simulate some Task, i.e. a httpclient request.... 
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Manage(obj);
 					});
 				});
 				t.Invoke(r =>
@@ -324,20 +331,23 @@ namespace SushiHangover.Tests
 					await Task.FromResult(true); // Simulate some Task, i.e. a httpclient request.... 
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Manage(obj);
 					});
 					await Task.Delay(1);
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key2";
+						r.Manage(obj);
 					});
 					await Task.Delay(1);
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key3";
+						r.Manage(obj);
 					});
 				});
 				t.Invoke(r =>

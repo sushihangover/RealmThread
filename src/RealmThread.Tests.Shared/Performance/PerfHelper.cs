@@ -25,9 +25,10 @@ namespace SushiHangover.Tests
 				{
 					foreach (var item in toWrite)
 					{
-						var obj = realm.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = item.Key;
 						obj.Value = item.Value;
+						realm.Manage(obj);
 					}
 				});
 

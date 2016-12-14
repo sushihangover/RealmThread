@@ -24,33 +24,6 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task CreateObject_OneTrans()
-		{
-			await GeneratePerfRangesForRealm(async (cache, size) =>
-			{
-				var toWrite = PerfHelper.GenerateRandomDatabaseContents(size);
-
-				var st = new Stopwatch();
-				st.Start();
-
-				await cache.WriteAsync((r) =>
-				{
-					foreach (var kvp in toWrite)
-					{
-						var c = r.CreateObject(typeof(KeyValueRecord).Name);
-						c.Key = kvp.Key;
-						c.Value = kvp.Value;
-					}
-				});
-
-				st.Stop();
-				return st.ElapsedMilliseconds;
-			});
-		}
-
-		[Theory]
-		[Repeat(Utility.COUNT)]
-		[TestMethodName]
 		public async Task Manage_updateFalse_OneTrans()
 		{
 			await GeneratePerfRangesForRealm(async (cache, size) =>

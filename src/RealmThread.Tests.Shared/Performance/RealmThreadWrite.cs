@@ -48,9 +48,10 @@ namespace SushiHangover.Tests
 									// Individual record write transactions so the other RealmThread can read asap
 									threadSafeWriteRealm.Write(() =>
 									{
-										var obj = threadSafeWriteRealm.CreateObject(typeof(KeyValueRecord).Name);
+										var obj = new KeyValueRecord();
 										obj.Key = kvp.Key;
 										obj.Value = kvp.Value;
+										threadSafeWriteRealm.Manage(obj);
 									});
 									blockingQueue.Add(kvp.Key);
 								}
@@ -83,7 +84,7 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task CreateObject_OneTrans_Invoke()
+		public async Task Manage_OneTrans_BeginInvoke()
 		{
 			await GeneratePerfRangesForRealm(async (cache, size) =>
 			{
@@ -101,9 +102,10 @@ namespace SushiHangover.Tests
 						{
 							foreach (var kvp in toWrite)
 							{
-								var obj = threadSafeRealm.CreateObject(typeof(KeyValueRecord).Name);
+								var obj = new KeyValueRecord();
 								obj.Key = kvp.Key;
 								obj.Value = kvp.Value;
+								threadSafeRealm.Manage(obj);
 							}
 						});
 						realmThread.CommitTransaction();
@@ -118,7 +120,7 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task CreateObject_OneTrans_InvokeAsync()
+		public async Task Manage_OneTrans_InvokeAsync()
 		{
 			await GeneratePerfRangesForRealm(async (cache, size) =>
 			{
@@ -138,9 +140,10 @@ namespace SushiHangover.Tests
 						{
 							foreach (var kvp in toWrite)
 							{
-								var obj = threadSafeRealm.CreateObject(typeof(KeyValueRecord).Name);
+								var obj = new KeyValueRecord();
 								obj.Key = kvp.Key;
 								obj.Value = kvp.Value;
+								threadSafeRealm.Manage(obj);
 							}
 						});
 					});
