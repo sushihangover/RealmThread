@@ -25,9 +25,10 @@ namespace SushiHangover.Tests
 				{
 					foreach (var item in toWrite)
 					{
-						var obj = realm.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = item.Key;
 						obj.Value = item.Value;
+						realm.Add(obj);
 					}
 				});
 
@@ -74,10 +75,9 @@ namespace SushiHangover.Tests
 			return k;
         }
 
-		public static int MaxRange = 12;
+		public static int MaxRange = 10;
         public static int[] GetPerfRanges()
         {
-			//TODO
 			return Enumerable.Range(1, MaxRange).Select(_ => 1 << _).ToArray();
         }
     }

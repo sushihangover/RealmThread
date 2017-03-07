@@ -14,6 +14,8 @@ using System.Threading;
 
 #tool "nuget:?package=Cake.AppleSimulator.SushiHangover"
 #tool "nuget:?package=SushiHangover.RealmThread"
+#tool "nuget:?package=RealmJson.Extensions"
+#tool "nuget:?package=SushiHangover.Android.Support.CustomTabs.Shared"
 #tool "nuget:?package=xunit.runner.console"
 #tool "nuget:?package=GitVersion.CommandLine"
 #tool "GitReleaseManager"

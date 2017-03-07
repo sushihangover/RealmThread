@@ -19,11 +19,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)Performance\RealmThreadWrite.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Performance\PerfHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Basic.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Performance\RealmRead.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Performance\RealmWrite.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)RealmNoSyncContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Stresser.cs" />
-    <None Include="$(MSBuildThisFileDirectory)Performance\RealmRead.cs" />
-    <None Include="$(MSBuildThisFileDirectory)Performance\RealmWrite.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Performance\" />

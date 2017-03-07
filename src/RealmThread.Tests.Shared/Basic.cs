@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Realms;
+using RealmThread.Tests.Shared;
 using Xunit;
 using Xunit.Sdk;
 
@@ -12,10 +13,7 @@ namespace SushiHangover.Tests
 {
 	public abstract class Basic : IClassFixture<GCFixture>, IDisposable
 	{
-		//protected static Dictionary<int, long> results;
-		//protected static string dbName;
 		protected static string nameOfRunningTest;
-		//readonly Random prng = new Random();
 
 		protected abstract Realms.Realm CreateRealmsInstance(string path);
 
@@ -50,12 +48,13 @@ namespace SushiHangover.Tests
 				{
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Add(obj);
 					});
 				});
 				fixture.Refresh();
-				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+				Assert.NotNull(fixture.Find<KeyValueRecord>("key"));
 			}
 		}
 
@@ -72,13 +71,14 @@ namespace SushiHangover.Tests
 				// Add a record on the current thread
 				fixture.Write(() =>
 				{
-					var obj = fixture.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					fixture.Add(obj);
 				});
 				t.Invoke(r =>
 				{
 					// Before each action a Refresh is performed so the record should be automaticially available to this thread
-					Assert.NotNull(r.ObjectForPrimaryKey<KeyValueRecord>("key"));
+					Assert.NotNull(r.Find<KeyValueRecord>("key"));
 				});
 			}
 		}
@@ -114,15 +114,16 @@ namespace SushiHangover.Tests
 					var keyValueRecord = new KeyValueRecord(); // a captured variable
 					realmThread.Invoke(r =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Add(obj);
 						keyValueRecord.Key = obj.Key;
 					});
 					Console.WriteLine($"{keyValueRecord.Key}:{keyValueRecord.Value}");
 					Assert.Equal("key", keyValueRecord.Key);
 				}
 				fixture.Refresh();
-				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+				Assert.NotNull(fixture.Find<KeyValueRecord>("key"));
 			}
 		}
 
@@ -140,12 +141,13 @@ namespace SushiHangover.Tests
 					t.BeginTransaction();
 					t.Invoke(r =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Add(obj);
 					});
 				}
 				fixture.Refresh();
-				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+				Assert.Null(fixture.Find<KeyValueRecord>("key"));
 			}
 		}
 
@@ -162,14 +164,15 @@ namespace SushiHangover.Tests
 				t.BeginTransaction();
 				t.Invoke(r =>
 				{
-					var obj = r.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					r.Add(obj);
 				});
 				fixture.Refresh();
-				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
+				Assert.Null(fixture.Find<KeyValueRecord>("key")); // Should not be available yet
 				t.CommitTransaction();
 				fixture.Refresh();
-				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should now be available
+				Assert.NotNull(fixture.Find<KeyValueRecord>("key")); // Should now be available
 			}
 		}
 
@@ -186,14 +189,15 @@ namespace SushiHangover.Tests
 				t.BeginTransaction();
 				t.Invoke(r =>
 				{
-					var obj = r.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					r.Add(obj);
 				});
 				fixture.Refresh();
-				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
+				Assert.Null(fixture.Find<KeyValueRecord>("key")); // Should not be available yet
 				t.RollbackTransaction();
 				fixture.Refresh();
-				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available
+				Assert.Null(fixture.Find<KeyValueRecord>("key")); // Should not be available
 			}
 		}
 
@@ -214,18 +218,19 @@ namespace SushiHangover.Tests
 				});
 				t.Invoke(r =>
 				{
-					var obj = r.CreateObject<KeyValueRecord>();
+					var obj = new KeyValueRecord();
 					obj.Key = "key";
+					r.Add(obj);
 				});
 				fixture.Refresh();
-				Assert.Null(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should not be available yet
+				Assert.Null(fixture.Find<KeyValueRecord>("key")); // Should not be available yet
 				t.Invoke(r =>
 				{
 					if (trans != null)
 						trans.Commit();
 				});
 				fixture.Refresh();
-				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key")); // Should now be available
+				Assert.NotNull(fixture.Find<KeyValueRecord>("key")); // Should now be available
 			}
 		}
 
@@ -243,13 +248,14 @@ namespace SushiHangover.Tests
 				{
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Add(obj);
 					});
 				});
 				t.Invoke(r =>
 				{
-					Assert.NotNull(r.ObjectForPrimaryKey<KeyValueRecord>("key"));
+					Assert.NotNull(r.Find<KeyValueRecord>("key"));
 				});
 			}
 		}
@@ -268,16 +274,17 @@ namespace SushiHangover.Tests
 				{
 					await r.WriteAsync((aNewRealm) =>
 					{
-						var obj = aNewRealm.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						aNewRealm.Add(obj);
 					});
 				});
 				t.Invoke(r =>
 				{
-					Assert.NotNull(r.ObjectForPrimaryKey<KeyValueRecord>("key"));
+					Assert.NotNull(r.Find<KeyValueRecord>("key"));
 				});
 				fixture.Refresh();
-				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+				Assert.NotNull(fixture.Find<KeyValueRecord>("key"));
 			}
 		}
 
@@ -296,16 +303,17 @@ namespace SushiHangover.Tests
 					await Task.FromResult(true); // Simulate some Task, i.e. a httpclient request.... 
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Add(obj);
 					});
 				});
 				t.Invoke(r =>
 				{
-					Assert.NotNull(r.ObjectForPrimaryKey<KeyValueRecord>("key"));
+					Assert.NotNull(r.Find<KeyValueRecord>("key"));
 				});
 				fixture.Refresh();
-				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+				Assert.NotNull(fixture.Find<KeyValueRecord>("key"));
 			}
 		}
 
@@ -324,28 +332,31 @@ namespace SushiHangover.Tests
 					await Task.FromResult(true); // Simulate some Task, i.e. a httpclient request.... 
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key";
+						r.Add(obj);
 					});
 					await Task.Delay(1);
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key2";
+						r.Add(obj);
 					});
 					await Task.Delay(1);
 					r.Write(() =>
 					{
-						var obj = r.CreateObject<KeyValueRecord>();
+						var obj = new KeyValueRecord();
 						obj.Key = "key3";
+						r.Add(obj);
 					});
 				});
 				t.Invoke(r =>
 				{
-					Assert.NotNull(r.ObjectForPrimaryKey<KeyValueRecord>("key"));
+					Assert.NotNull(r.Find<KeyValueRecord>("key"));
 				});
 				fixture.Refresh();
-				Assert.NotNull(fixture.ObjectForPrimaryKey<KeyValueRecord>("key"));
+				Assert.NotNull(fixture.Find<KeyValueRecord>("key"));
 			}
 		}
 
@@ -372,8 +383,7 @@ namespace SushiHangover.Tests
 	{
 		protected override Realms.Realm CreateRealmsInstance(string path)
 		{
-			return Realms.Realm.GetInstance(Path.Combine(path, "realm.db"));
+			return RealmNoSyncContext.GetInstance(Path.Combine(path, "realm.db"));
 		}
 	}
-
 }

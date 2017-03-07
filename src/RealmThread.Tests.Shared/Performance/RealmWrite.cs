@@ -2,15 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Reactive.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 using Xunit;
 using Xunit.Sdk;
-using System.Reflection;
-using System.Reactive;
-using Realms;
-using Log = System.Diagnostics.Debug;
+using RealmThread.Tests.Shared;
 
 namespace SushiHangover.Tests
 {
@@ -24,33 +20,6 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task CreateObject_OneTrans()
-		{
-			await GeneratePerfRangesForRealm(async (cache, size) =>
-			{
-				var toWrite = PerfHelper.GenerateRandomDatabaseContents(size);
-
-				var st = new Stopwatch();
-				st.Start();
-
-				await cache.WriteAsync((r) =>
-				{
-					foreach (var kvp in toWrite)
-					{
-						var c = r.CreateObject(typeof(KeyValueRecord).Name);
-						c.Key = kvp.Key;
-						c.Value = kvp.Value;
-					}
-				});
-
-				st.Stop();
-				return st.ElapsedMilliseconds;
-			});
-		}
-
-		[Theory]
-		[Repeat(Utility.COUNT)]
-		[TestMethodName]
 		public async Task Manage_updateFalse_OneTrans()
 		{
 			await GeneratePerfRangesForRealm(async (cache, size) =>
@@ -60,18 +29,23 @@ namespace SushiHangover.Tests
 				var st = new Stopwatch();
 				st.Start();
 
-				await cache.WriteAsync((r) =>
+				using (var realmThread = new RealmThread(cache.Config))
 				{
-					foreach (var kvp in toWrite)
+					realmThread.Invoke((realm) =>
 					{
-						var c = new KeyValueRecord();
-						c.Key = kvp.Key;
-						c.Value = kvp.Value;
-						r.Manage(c, update: false);
-					}
-				});
+						realm.Write(() =>
+						{
+							foreach (var kvp in toWrite)
+							{
+								var c = new KeyValueRecord { Key = kvp.Key, Value = kvp.Value };
+								realm.Add(c, update: false);
+							}
+						});
+					});
+				}
 
 				st.Stop();
+				await Task.Delay(1); // cheap hack
 				return st.ElapsedMilliseconds;
 			});
 		}
@@ -88,18 +62,23 @@ namespace SushiHangover.Tests
 				var st = new Stopwatch();
 				st.Start();
 
-				await cache.WriteAsync((r) =>
+				using (var realmThread = new RealmThread(cache.Config))
 				{
-					foreach (var kvp in toWrite)
+					realmThread.Invoke((realm) =>
 					{
-						var c = new KeyValueRecord();
-						c.Key = kvp.Key;
-						c.Value = kvp.Value;
-						r.Manage(c, update: true);
-					}
-				});
+						realm.Write(() =>
+						{
+							foreach (var kvp in toWrite)
+							{
+								var c = new KeyValueRecord { Key = kvp.Key, Value = kvp.Value };
+								realm.Add(c, update: true);
+							}
+						});
+					});
+				}
 
 				st.Stop();
+				await Task.Delay(1); // cheap hack
 				return st.ElapsedMilliseconds;
 			});
 		}
@@ -110,7 +89,7 @@ namespace SushiHangover.Tests
 			dbName = default(string);
 			var dirPath = default(string);
 			using (Utility.WithEmptyDirectory(out dirPath))
-			using (var cache = Realms.Realm.GetInstance(Path.Combine(dirPath, "realm.db")))
+			using (var cache = RealmThread.GetInstance(Path.Combine(dirPath, "realm.db")))
 			{
 				dbName = "Realm";
 
@@ -145,9 +124,7 @@ namespace SushiHangover.Tests
 	{
 		protected override Realms.Realm CreateRealmInstance(string path)
 		{
-			return Realms.Realm.GetInstance(Path.Combine(path, "realm.db"));
+			return RealmNoSyncContext.GetInstance(Path.Combine(path, "realm.db"));
 		}
 	}
-
-
 }
