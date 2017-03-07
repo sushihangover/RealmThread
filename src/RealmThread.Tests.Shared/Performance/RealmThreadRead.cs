@@ -8,6 +8,7 @@ using System.Reactive.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Realms;
+using RealmThread.Tests.Shared;
 using Xunit;
 using Xunit.Sdk;
 
@@ -25,7 +26,7 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task ObjectForPrimaryKey_Sequential()
+		public async Task Find_Sequential()
 		{
 			await GeneratePerfRangesForBlock2(async (cache, size, keys) =>
 			{
@@ -38,15 +39,16 @@ namespace SushiHangover.Tests
 				{
 					st.Start();
 
-					var realmThread = new RealmThread(cache.Config);
-					realmThread.BeginInvoke(threadSafeRealm =>
+					var rt = new RealmThread(cache.Config);
+					rt.BeginInvoke(threadSafeRealm =>
 					{
 						foreach (var v in toFetch)
 						{
-							threadSafeRealm.ObjectForPrimaryKey<KeyValueRecord>(v);
+							var record = threadSafeRealm.Find<KeyValueRecord>(v);
+							Assert.NotNull(record);
 						}
 					});
-					realmThread.Dispose();
+					rt.Dispose();
 
 					st.Stop();
 				});
@@ -58,7 +60,7 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task ObjectForPrimaryKey_Parallel_SingleRealmThread()
+		public async Task Find_Parallel_SingleRealmThread()
 		{
 			await GeneratePerfRangesForBlock2(async (cache, size, keys) =>
 			{
@@ -71,15 +73,15 @@ namespace SushiHangover.Tests
 				{
 					st.Start();
 
-					using (var realmThread = new RealmThread(cache.Config))
+					using (var rt = new RealmThread(cache.Config))
 					{
 						Parallel.ForEach(
 							toFetch,
 							key =>
 							{
-								realmThread.BeginInvoke(threadSafeRealm =>
+								rt.BeginInvoke(threadSafeRealm =>
 								{
-									var record = threadSafeRealm.ObjectForPrimaryKey<KeyValueRecord>(key);
+									var record = threadSafeRealm.Find<KeyValueRecord>(key);
 									Assert.NotNull(record);
 								});
 							});
@@ -94,7 +96,7 @@ namespace SushiHangover.Tests
 		[Theory]
 		[Repeat(Utility.COUNT)]
 		[TestMethodName]
-		public async Task ObjectForPrimaryKey_Parallel_MultiRealmThread()
+		public async Task Find_Parallel_MultiRealmThread()
 		{
 			await GeneratePerfRangesForBlock2(async (cache, size, keys) =>
 			{
@@ -115,7 +117,7 @@ namespace SushiHangover.Tests
 						{
 							realmThread.BeginInvoke(threadSafeRealm =>
 							{
-								threadSafeRealm.ObjectForPrimaryKey<KeyValueRecord>(key);
+								threadSafeRealm.Find<KeyValueRecord>(key);
 							});
 							return realmThread;
 						},
@@ -194,20 +196,26 @@ namespace SushiHangover.Tests
 			path = path ?? IntegrationTestHelper.GetIntegrationTestRootDirectory();
 
 			var giantDbSize = PerfHelper.GetPerfRanges().Last();
+
 			var config = new RealmConfiguration(Path.Combine(path, "perf.realm"))
 			{
 				ObjectClasses = new Type[] { typeof(KeyValueRecord) },
-				ReadOnly = false
+				IsReadOnly = false
 			};
-			var cache = Realms.Realm.GetInstance(config);
+
+			var cache = RealmThread.GetInstance(config);
 
 			var keys = cache.All<KeyValueRecord>().Count();
 			if (keys == giantDbSize) return cache;
 
-			await cache.WriteAsync(r =>
+			using (var realmThread = new RealmThread(cache.Config))
 			{
-				r.RemoveAll();
-			});
+				realmThread.Invoke((obj) =>
+				{
+					obj.Write(() => { obj.RemoveAll(); });
+				});
+			}
+
 			await GenerateRealmDB(cache, giantDbSize);
 
 			return cache;
@@ -223,14 +231,20 @@ namespace SushiHangover.Tests
 				var toWriteSize = Math.Min(4096, size);
 				var toWrite = PerfHelper.GenerateRandomDatabaseContents(toWriteSize);
 
-				await targetCache.WriteAsync((Realms.Realm realm) =>
+				using (var rt = new RealmThread(targetCache.Config))
 				{
-					foreach (var item in toWrite)
-					{
-						var c = new KeyValueRecord { Key = item.Key, Value = item.Value };
-						realm.Manage(c); // update: false
-					}
-				});
+					await rt.InvokeAsync(async (Realms.Realm r) =>
+					{ 
+						await r.WriteAsync((updateRealm) =>
+						{
+							foreach (var item in toWrite)
+							{
+								var c = new KeyValueRecord { Key = item.Key, Value = item.Value };
+								updateRealm.Add(c); // update: false
+							}
+						});
+					});
+				}
 				foreach (var k in toWrite.Keys) ret.Add(k);
 				size -= toWrite.Count;
 			}
@@ -244,9 +258,15 @@ namespace SushiHangover.Tests
 
 			var dirPath = default(string);
 			using (Utility.WithEmptyDirectory(out dirPath))
-			using (var cache = Realms.Realm.GetInstance(Path.Combine(dirPath, "perf.realm")))
+			using (var cache = RealmThread.GetInstance(Path.Combine(dirPath, "perf.realm")))
 			{
-				cache.RemoveAll();
+				using (var rt = new RealmThread(cache.Config))
+				{
+					rt.Invoke((r) =>
+					{
+						r.Write(() => { r.RemoveAll(); });
+					});
+				}
 				dbName = "Realm";
 
 				foreach (var size in PerfHelper.GetPerfRanges())
@@ -282,9 +302,7 @@ namespace SushiHangover.Tests
 	{
 		protected override Realms.Realm CreateRealmsInstance(string path)
 		{
-			var realm = Realms.Realm.GetInstance(Path.Combine(path, "perf.relam"));
-			return realm;
+			return RealmNoSyncContext.GetInstance(Path.Combine(path, "realm.db"));
 		}
 	}
-
 }

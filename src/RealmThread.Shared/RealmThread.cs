@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using Realms;
 
 namespace SushiHangover
 {
@@ -36,7 +37,7 @@ namespace SushiHangover
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
 		/// <param name="realmConfig">RealmConfiguration</param>
-		public RealmThread(Realms.RealmConfiguration realmConfig) : this(realmConfig, false)
+		public RealmThread(RealmConfigurationBase realmConfig) : this(realmConfig, false)
 		{
 		}
 
@@ -45,7 +46,7 @@ namespace SushiHangover
 		/// </summary>
 		/// <param name="realmConfig">RealmConfiguration</param>
 		/// <param name="autoCommmit">If set to <c>true</c> auto commmit open transaction on Dispose</param>
-		public RealmThread(Realms.RealmConfiguration realmConfig, bool autoCommmit)
+		public RealmThread(RealmConfigurationBase realmConfig, bool autoCommmit)
 		{
 			autoCommmitOnDispose = autoCommmit;
 			workQueue = new BlockingCollection<RealmWork>();
@@ -173,6 +174,34 @@ namespace SushiHangover
 			}
 		}
 
+		public static Realms.Realm GetInstance(RealmConfigurationBase config)
+		{
+			var context = SynchronizationContext.Current;
+			SynchronizationContext.SetSynchronizationContext(null);
+
+			Realms.Realm realm = null;
+			try
+			{
+				realm = Realms.Realm.GetInstance(config);
+			}
+			finally
+			{
+				SynchronizationContext.SetSynchronizationContext(context);
+			}
+			return realm;
+		}
+
+		public static Realms.Realm GetInstance(RealmConfiguration config)
+		{
+			return GetInstance((RealmConfigurationBase)config);
+		}
+
+		public static Realms.Realm GetInstance(string databasePath)
+		{
+			var config = new RealmConfiguration(databasePath);
+			return GetInstance(config);
+		}
+
 		// TODO: How would you marshall a RealmObject/RealmResults across the thread? 
 		// Create a POCO from a RealmObject? 
 		// or an IEnumerator<POCO> from a RealmResult?
@@ -216,7 +245,7 @@ namespace SushiHangover
 		readonly Thread thread;
 		readonly BlockingCollection<RealmWork> workQueue;
 		int managedThreadId;
-		public Realms.Transaction trans;
+		public Transaction trans;
 
 		public int ManagedThreadId
 		{
@@ -248,7 +277,8 @@ namespace SushiHangover
 		public void Run(object parentRealmConfig)
 		{
 			managedThreadId = Thread.CurrentThread.ManagedThreadId;
-			using (var localRealm = Realms.Realm.GetInstance(parentRealmConfig as Realms.RealmConfiguration))
+			//using (var localRealm = Realms.Realm.GetInstance(parentRealmConfig as RealmConfiguration))
+			using (var localRealm = RealmThread.GetInstance(parentRealmConfig as RealmConfigurationBase))
 			{
 				foreach (var workItem in workQueue.GetConsumingEnumerable())
 				{
@@ -277,7 +307,7 @@ namespace SushiHangover
 							workItem.WorkAction(localRealm);
 							syncCtx.OperationCompleted();
 							workItem.CompleteEvent.Set();
-						} 
+						}
 						else
 						{
 							// Invoke the function and alert the context to when it completes
@@ -300,7 +330,7 @@ namespace SushiHangover
 							}
 							else
 							{
-								workItem.ForeignTask((Task<Realms.RealmObject>)t);
+								workItem.ForeignTask((Task<RealmObject>)t);
 							}
 						}
 					}

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using System.Threading.Tasks;
+using RealmThread.Tests.Shared;
 using Xunit;
 using Xunit.Sdk;
 
@@ -24,10 +25,14 @@ namespace SushiHangover.Tests
 		{
 			await GeneratePerfRangesForRealm(async (cache, size) =>
 			{
-				await cache.WriteAsync((obj) =>
+				using (var rt = new RealmThread(cache.Config))
 				{
-					obj.RemoveAll();
-				});
+					rt.Invoke((Realms.Realm r) =>
+					{
+						r.Write(() => { r.RemoveAll(); });
+					});
+				}
+
 				var toWrite = PerfHelper.GenerateRandomDatabaseContents(size);
 
 				var st = new Stopwatch();
@@ -51,7 +56,7 @@ namespace SushiHangover.Tests
 										var obj = new KeyValueRecord();
 										obj.Key = kvp.Key;
 										obj.Value = kvp.Value;
-										threadSafeWriteRealm.Manage(obj);
+										threadSafeWriteRealm.Add(obj);
 									});
 									blockingQueue.Add(kvp.Key);
 								}
@@ -68,7 +73,7 @@ namespace SushiHangover.Tests
 									// so if we are within the RealmPump block and need to see the latest changes 
 									// from other Realm instances, call Refresh manually
 									threadSafeReadRealm.Refresh();
-									var record = threadSafeReadRealm.ObjectForPrimaryKey<KeyValueRecord>(key);
+									var record = threadSafeReadRealm.Find<KeyValueRecord>(key);
 									Assert.NotNull(record);
 									Assert.Equal(key, record.Key);
 								}
@@ -105,7 +110,7 @@ namespace SushiHangover.Tests
 								var obj = new KeyValueRecord();
 								obj.Key = kvp.Key;
 								obj.Value = kvp.Value;
-								threadSafeRealm.Manage(obj);
+								threadSafeRealm.Add(obj);
 							}
 						});
 						realmThread.CommitTransaction();
@@ -143,7 +148,7 @@ namespace SushiHangover.Tests
 								var obj = new KeyValueRecord();
 								obj.Key = kvp.Key;
 								obj.Value = kvp.Value;
-								threadSafeRealm.Manage(obj);
+								threadSafeRealm.Add(obj);
 							}
 						});
 					});
@@ -160,7 +165,7 @@ namespace SushiHangover.Tests
 			dbName = default(string);
 			var dirPath = default(string);
 			using (Utility.WithEmptyDirectory(out dirPath))
-			using (var cache = Realms.Realm.GetInstance(Path.Combine(dirPath, "perf.realm")))
+			using (var cache = RealmThread.GetInstance(Path.Combine(dirPath, "perf.realm")))
 			{
 				dbName = "Realm";
 
@@ -196,9 +201,7 @@ namespace SushiHangover.Tests
 	{
 		protected override Realms.Realm CreateRealmInstance(string path)
 		{
-			return Realms.Realm.GetInstance(Path.Combine(path, "perf.realm"));
+			return RealmNoSyncContext.GetInstance(Path.Combine(path, "realm.db"));
 		}
 	}
-
-
 }

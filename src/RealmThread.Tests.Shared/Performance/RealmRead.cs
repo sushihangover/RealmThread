@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Reactive;
 using Realms;
 using Log = System.Diagnostics.Debug;
+using RealmThread.Tests.Shared;
 
 namespace SushiHangover.Tests
 {
@@ -37,13 +38,13 @@ namespace SushiHangover.Tests
 
 				await Task.Run(() =>
 				{
-					using (var localRealm = Realms.Realm.GetInstance(cache.Config))
+					using (var localRealm = RealmThread.GetInstance(cache.Config))
 					{
 						st.Start();
 
 						foreach (var v in toFetch)
 						{
-							localRealm.ObjectForPrimaryKey<KeyValueRecord>(v);
+							localRealm.Find<KeyValueRecord>(v);
 						}
 
 						st.Stop();
@@ -72,9 +73,9 @@ namespace SushiHangover.Tests
 
 					foreach (var key in toFetch)
 					{
-						using (var localRealm = Realms.Realm.GetInstance(cache.Config))
+						using (var localRealm = RealmThread.GetInstance(cache.Config))
 						{
-							var obj = localRealm.ObjectForPrimaryKey<KeyValueRecord>(key);
+							var obj = localRealm.Find<KeyValueRecord>(key);
 							Assert.Equal(key, obj.Key);
 						}
 					}
@@ -106,10 +107,10 @@ namespace SushiHangover.Tests
 					{
 						await Task.Run(() =>
 						{
-							using (var localRealm = Realms.Realm.GetInstance(cache.Config))
+							using (var localRealm = RealmThread.GetInstance(cache.Config))
 							{
 								localRealm.Refresh();
-								var obj = localRealm.ObjectForPrimaryKey<KeyValueRecord>(key);
+								var obj = localRealm.Find<KeyValueRecord>(key);
 								Assert.NotNull(obj);
 								Assert.Equal(key, obj.Key);
 							}
@@ -156,10 +157,10 @@ namespace SushiHangover.Tests
 						new ParallelOptions { MaxDegreeOfParallelism = 4 },
 						key =>
 						{
-							using (var localRealm = Realms.Realm.GetInstance(cache.Config))
+							using (var localRealm = RealmThread.GetInstance(cache.Config))
 							{
 								localRealm.Refresh();
-								var obj = localRealm.ObjectForPrimaryKey<KeyValueRecord>(key);
+								var obj = localRealm.Find<KeyValueRecord>(key);
 								Assert.NotNull(obj);
 								Assert.Equal(key, obj.Key);
 							}
@@ -186,7 +187,7 @@ namespace SushiHangover.Tests
 
 				await Task.Run(() =>
 				{
-					var localRealm = Realms.Realm.GetInstance(cache.Config);
+					var localRealm = RealmThread.GetInstance(cache.Config);
 					st.Start();
 
 					foreach (var key in toFetch)
@@ -220,7 +221,7 @@ namespace SushiHangover.Tests
 
 					foreach (var key in toFetch)
 					{
-						using (var localRealm = Realms.Realm.GetInstance(cache.Config))
+						using (var localRealm = RealmThread.GetInstance(cache.Config))
 						{
 							var objs = localRealm.All<KeyValueRecord>().Where((KeyValueRecord c) => c.Key == key);
 							Assert.Equal(1, objs.Count());
@@ -254,7 +255,7 @@ namespace SushiHangover.Tests
 					{
 						await Task.Run(() =>
 						{
-							using (var localRealm = Realms.Realm.GetInstance(cache.Config))
+							using (var localRealm = RealmThread.GetInstance(cache.Config))
 							{
 								var objs = localRealm.All<KeyValueRecord>().Where((KeyValueRecord c) => c.Key == key);
 								Assert.Equal(1, objs.Count());
@@ -279,10 +280,15 @@ namespace SushiHangover.Tests
 			using (var cache = await GenerateRealmDB(dirPath))
 			{
 				List<string> keys = null;
-				await cache.WriteAsync(r => // This is just a cheap way to avoid "Realm accessed from incorrect thread"
+				using (var realmThread = new RealmThread(cache.Config))
 				{
-					keys = r.All<KeyValueRecord>().ToList().Select(x => x.Key).ToList();
-				});
+					realmThread.Invoke((r) =>
+					{
+						r.Write(() => { 
+							keys = r.All<KeyValueRecord>().ToList().Select(x => x.Key).ToList();
+						});
+					});
+				}
 				dbName = dbName ?? cache.GetType().Name;
 
 				foreach (var size in PerfHelper.GetPerfRanges())
@@ -299,18 +305,20 @@ namespace SushiHangover.Tests
 			var giantDbSize = PerfHelper.GetPerfRanges().Last();
 			var config = new RealmConfiguration(Path.Combine(path, "realm.db"))
 			{
-				ObjectClasses = new Type[] { typeof(KeyValueRecord) },
-				ReadOnly = false
+				ObjectClasses = new Type[] { typeof(KeyValueRecord) }
 			};
-			var cache = Realms.Realm.GetInstance(config);
+			var cache = RealmThread.GetInstance(config);
 
 			var keys = cache.All<KeyValueRecord>().Count();
 			if (keys == giantDbSize) return cache;
 
-			await cache.WriteAsync(r =>
+			using (var realmThread = new RealmThread(cache.Config))
 			{
-				r.RemoveAll();
-			});
+				realmThread.Invoke((obj) =>
+				{
+					obj.Write(() => { obj.RemoveAll(); });
+				});
+			}
 			await GenerateRealmDB(cache, giantDbSize);
 
 			return cache;
@@ -326,16 +334,20 @@ namespace SushiHangover.Tests
 				var toWriteSize = Math.Min(4096, size);
 				var toWrite = PerfHelper.GenerateRandomDatabaseContents(toWriteSize);
 
-				await targetCache.WriteAsync((Realms.Realm realm) =>
+				using (var rt = new RealmThread(targetCache.Config))
 				{
-					foreach (var item in toWrite)
+					await rt.InvokeAsync(async(Realms.Realm arg) =>
 					{
-						var c = new KeyValueRecord();
-						c.Key = item.Key;
-						c.Value = item.Value;
-						realm.Manage<KeyValueRecord>(c); // update: false
-					}
-				});
+						await arg.WriteAsync((r) =>
+						{
+							foreach (var item in toWrite)
+							{
+								var c = new KeyValueRecord { Key = item.Key, Value = item.Value };
+								r.Add(c); // update: false
+							}
+						});
+					});
+				}
 				foreach (var k in toWrite.Keys) ret.Add(k);
 				size -= toWrite.Count;
 			}
@@ -349,9 +361,15 @@ namespace SushiHangover.Tests
 
 			var dirPath = default(string);
 			using (Utility.WithEmptyDirectory(out dirPath))
-			using (var cache = Realms.Realm.GetInstance(Path.Combine(dirPath, "realm.db")))
+			using (var cache = RealmThread.GetInstance(Path.Combine(dirPath, "realm.db")))
 			{
-				cache.RemoveAll();
+				using (var realmThread = new RealmThread(cache.Config))
+				{
+					realmThread.Invoke((obj) =>
+					{
+						obj.Write(() => { obj.RemoveAll(); });
+					});
+				}
 				dbName = "Realm";
 
 				foreach (var size in PerfHelper.GetPerfRanges())
@@ -386,8 +404,7 @@ namespace SushiHangover.Tests
 	{
 		protected override Realms.Realm CreateRealmsInstance(string path)
 		{
-			return Realms.Realm.GetInstance(Path.Combine(path, "realm.db"));
+			return RealmNoSyncContext.GetInstance(Path.Combine(path, "realm.db"));
 		}
 	}
-
 }
