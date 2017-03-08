@@ -36,7 +36,7 @@ namespace SushiHangover
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
-		/// <param name="realmConfig">RealmConfiguration</param>
+		/// <param name="realmConfig">RealmConfigurationBase</param>
 		public RealmThread(RealmConfigurationBase realmConfig) : this(realmConfig, false)
 		{
 		}
@@ -44,7 +44,7 @@ namespace SushiHangover
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
-		/// <param name="realmConfig">RealmConfiguration</param>
+		/// <param name="realmConfig">RealmConfigurationBase</param>
 		/// <param name="autoCommmit">If set to <c>true</c> auto commmit open transaction on Dispose</param>
 		public RealmThread(RealmConfigurationBase realmConfig, bool autoCommmit)
 		{
