@@ -14,8 +14,8 @@ namespace SushiHangover
 		/// <value>The managed thread identifier.</value>
 		int ManagedThreadId
 		{
-			get 
-			{ 
+			get
+			{
 				PCLHelpers.ThrowProxyShouldNeverBeUsed();
 				return int.MinValue;
 			}
@@ -27,7 +27,8 @@ namespace SushiHangover
 		/// <value><c>true</c> if in transaction; otherwise, <c>false</c>.</value>
 		public bool InTransaction
 		{
-			get { 
+			get
+			{
 				PCLHelpers.ThrowProxyShouldNeverBeUsed();
 				return false;
 			}
@@ -36,8 +37,8 @@ namespace SushiHangover
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
-		/// <param name="realmConfig">RealmConfiguration</param>
-		public RealmThread(Realms.RealmConfiguration realmConfig) : this(realmConfig, false)
+		/// <param name="realmConfig">RealmConfigurationBase</param>
+		public RealmThread(Realms.RealmConfigurationBase realmConfig) : this(realmConfig, false)
 		{
 			PCLHelpers.ThrowProxyShouldNeverBeUsed();
 		}
@@ -45,9 +46,9 @@ namespace SushiHangover
 		/// <summary>
 		/// Initializes a new instance of the <see cref="T:SushiHangover.RealmThread"/> class.
 		/// </summary>
-		/// <param name="realmConfig">RealmConfiguration</param>
+		/// <param name="realmConfig">RealmConfigurationBase</param>
 		/// <param name="autoCommmit">If set to <c>true</c> auto commmit open transaction on Dispose</param>
-		public RealmThread(Realms.RealmConfiguration realmConfig, bool autoCommmit)
+		public RealmThread(Realms.RealmConfigurationBase realmConfig, bool autoCommmit)
 		{
 			PCLHelpers.ThrowProxyShouldNeverBeUsed();
 		}
