@@ -26,8 +26,8 @@ namespace RealmThread.NugetTest.Droid
 		
 		public static void UpdateIdValues()
 		{
-			global::Xamarin.Forms.Platform.Android.Resource.Attribute.actionBarSize = global::RealmThread.NugetTest.Droid.Resource.Attribute.actionBarSize;
 			global::SushiHangover.Resource.String.library_name = global::RealmThread.NugetTest.Droid.Resource.String.library_name;
+			global::Xamarin.Forms.Platform.Android.Resource.Attribute.actionBarSize = global::RealmThread.NugetTest.Droid.Resource.Attribute.actionBarSize;
 		}
 		
 		public partial class Animation
